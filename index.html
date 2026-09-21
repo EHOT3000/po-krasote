@@ -2889,10 +2889,10 @@ function deliverTo(carrierPos, carryObj, onDelivered){
         // было — покупка молча ничего не делала). Плюс мета-прокачка «Империя»
         // рецепты отключены (как и в 2D в итоге — сильно дисбалансили цены),
         // «Обаяние» теперь удваивает только чаевые (см. calcTip), не весь чек
-        const price = Math.round(item.price * priceMult() * vibeMult() * payMult() * metaIncomeMult() * modIncomeMult() * gs.prestigeMult);
+        const price = Math.round(item.price * priceMult() * vibeMult() * payMult() * metaIncomeMult() * modIncomeMult() * gs.prestigeMult * (g.groupState ? GROUP_PRICE_MULT : 1));
         // чаевые НЕ падают монетой за каждую позицию — копятся молча (как в
         // 2D c.tip), одной монетой упадут у места, когда гость встанет уходить
-        const freshness = Math.max(0, Math.min(1, g.patience / item.patience));
+        const freshness = g.groupState ? Math.max(0, Math.min(1, g.groupState.patience / g.groupState.maxPatience)) : Math.max(0, Math.min(1, g.patience / item.patience));
         g.tipAccum = (g.tipAccum||0) + calcTip(price, freshness);
         bank(price); gainXp(10); gs.served++; recordOutcome(true);
         if(item.hookah) gs.hookahsServed++;
@@ -2905,6 +2905,7 @@ function deliverTo(carrierPos, carryObj, onDelivered){
       // Энро «пьёт» фиксированные 4 сек (ENRO_SIP) независимо от напитка —
       // не item.sit (это только для обычных гостей)
       g.orderState = 'eating'; g.sitT = g.isEnro ? ENRO_SIP : item.sit; g.claimedBy = null;
+      placeTableItem(g, item);
       // пока пьёт — спокоен, кольцо агрессии перестаёт трястись и садится
       // ровно по центру (тряска идёт только пока реально ждёт, см. ниже)
       if(g.isEnro && g.patienceBar) g.patienceBar.spr.position.set(0, 2.05, 0);
@@ -4013,22 +4014,23 @@ function pickIdleWalkActions(mixer, clips){
 // не работает. Пока используем ту же надёжную заглушку-человечка, что и у
 // игрока (buildCharacter) — она уже безотказно ходит, просто другого цвета.
 const GUEST_COLORS = [0x5a4a30, 0x2f4a4a, 0x4a2f45, 0x33402f];
-function spawnGuestAtSeat(seat, groupState){
+function spawnGuestAtSeat(seat, groupState, forcedOrder){
   const color = GUEST_COLORS[guests.length % GUEST_COLORS.length];
   const ch = guestChar() || buildCharacter(color, 0xd9b38c);
   ch.root.position.set(DOOR_SCENE.x, 0, DOOR_SCENE.z);
   scene.add(ch.root);
 
-  const order = rollOrderId();
+  const order = forcedOrder || rollOrderId();
   const numTag = makeNumberLabel(String(seat.num), '#f3e9ff');
   numTag.position.set(0, 2.1, 0);
   ch.root.add(numTag);
   const g = { sk:ch.sk, root:ch.root, legL:ch.legL, legR:ch.legR, armL:ch.armL, armR:ch.armR, seat,
     state:'walking', walkT:0, order, orderState:'waiting', orderIcon:null,
-    patience:itemById(order).patience, sitT:0, manualIdx:0, groupState:groupState||null };
+    patience:itemById(order).patience, sitT:0, manualIdx:0, groupState:groupState||null, queue:[] };
   guests.push(g);
   if(groupState) groupState.members.push(g);
   el('guestStatus').textContent = 'гостей в зале: ' + guests.length;
+  return g;
 }
 function spawnGuest(){
   // раньше это была жёсткая цепочка приоритетов (сперва основные 4 стула у
@@ -4231,39 +4233,98 @@ function activeBigTables(){ return BIGTABLES.slice(0, gs.n.bigtable||0); }
 // не у каждого своё: как в 2D (там это вообще один «customer» с одним
 // c.patience на несколько заказов). Тикает и решает «уходить или нет»
 // централизованно, один раз за кадр — см. updateGroups()
-const GROUP_PATIENCE = 60;
+// ── ПРЕДМЕТЫ НА СТОЛЕ: пока гость пьёт/ест, его заказ стоит перед ним на столе (или стойке); встал — пропал.
+// Высоту и край столешницы ищем лучом вниз по столам/стойкам, так что работает для любой мебели и расстановки
+let _tblTargets = null;
+function tableTargets(){
+  if(_tblTargets) return _tblTargets;
+  _tblTargets = editables.filter(e=>e.kind==='стол' || e.kind==='круглый стол').map(e=>e.group);
+  [mainBarGroup, wingGroup, guestBarTableGroup].forEach(g=>{ if(g) _tblTargets.push(g); });
+  return _tblTargets;
+}
+const _tblRay = new THREE.Raycaster(), _tblDown = new THREE.Vector3(0,-1,0), _tblOrg = new THREE.Vector3();
+function tableSurfaceY(x, z){
+  _tblOrg.set(x, 2.6, z); _tblRay.set(_tblOrg, _tblDown); _tblRay.far = 3; _tblRay.camera = camera; // спрайты (метки на стойках) требуют камеру у луча
+  for(const h of _tblRay.intersectObjects(tableTargets(), true)){ if(h.object.isMesh && h.point.y > 0.6 && h.point.y < 1.4) return h.point.y; }
+  return null;
+}
+function tableSpot(seat, idx){
+  const fx = Math.sin(seat.rotY), fz = Math.cos(seat.rotY), lx = fz, lz = -fx; // вперёд (к столу) и вбок
+  let d0 = null;
+  for(let d=0.25; d<=1.9; d+=0.04){ if(tableSurfaceY(seat.x+fx*d, seat.z+fz*d) != null){ d0 = d; break; } }
+  if(d0 == null) return null;
+  const lat = [0, 0.24, -0.24, 0.48, -0.48][idx % 5];
+  for(const extra of [0.3, 0.18, 0.08]){
+    const x = seat.x + fx*(d0+extra) + lx*lat, z = seat.z + fz*(d0+extra) + lz*lat, y = tableSurfaceY(x, z);
+    if(y != null) return { x, z, y };
+  }
+  return null;
+}
+function placeTableItem(g, item){
+  if(!g.seat) return;
+  g.tableItems = g.tableItems || [];
+  const spot = tableSpot(g.seat, g.tableItems.length); if(!spot) return;
+  const m = makeDrinkModel(item.id, (PASS_SIZE[item.id] || PASS_H) * 0.8); if(!m) return;
+  m.position.set(spot.x, spot.y + 0.005, spot.z); m.rotation.y = Math.random()*6.28;
+  scene.add(m); g.tableItems.push(m);
+}
+function clearTableItems(g){ if(g.tableItems){ g.tableItems.forEach(dropObj); g.tableItems = null; } }
+
+// ── КОМПАНИИ — как в 2D: общий заказ на всех (3–5 позиций, чаще есть кальян), общее терпение (в 1.6 раза дольше
+// одиночки), каждая позиция дороже ×1.8, чаевые копятся на компанию, уходят все вместе одной монетой чаевых
+const GROUP_PRICE_MULT = 1.8, GROUP_PATIENCE_MULT = 1.6, GROUP_HOOKAH_CHANCE = 0.55, GROUP_LEAVE_DELAY = 2.5, GROUP_PATIENCE_MIN = 45;
 const activeGroups = [];
 function spawnGroup(){
   const table = activeBigTables().find(t=>t.occupiedCount===0);
   if(!table) return;
   const seats = BIGTABLE_SEATS.filter(s=>s.table===table);
-  const size = 2 + ((Math.random()*2)|0); // 2-3 человека
-  const groupState = { patience:GROUP_PATIENCE, maxPatience:GROUP_PATIENCE, members:[] };
+  const size = Math.min(seats.length, 3 + ((Math.random()*2)|0)); // 3-4 человека
+  const cnt = size + (Math.random() < 0.6 ? 1 : 0);              // 3-5 позиций на всех
+  const ids = [];
+  for(let k=0; k<cnt; k++){
+    ids.push((k===0 && gs.zoneUnlocked && Math.random() < GROUP_HOOKAH_CHANCE) ? HOOKAHS[(Math.random()*HOOKAHS.length)|0].id : rollOrderId());
+  }
+  const avgPat = ids.reduce((t,id)=>t+itemById(id).patience, 0) / ids.length;
+  const pmax = Math.max(GROUP_PATIENCE_MIN, avgPat * GROUP_PATIENCE_MULT);
+  const groupState = { patience:pmax, maxPatience:pmax, members:[], doneT:0 };
   activeGroups.push(groupState);
-  seats.slice(0, Math.min(size, seats.length)).forEach(seat=>{
+  seats.slice(0, size).forEach((seat, i)=>{
     seat.occupied = true; table.occupiedCount++;
-    spawnGuestAtSeat(seat, groupState);
+    const g = spawnGuestAtSeat(seat, groupState, ids[i]);
+    // лишние позиции — тем же людям по очереди (следующий заказ после первого)
+    for(let k=size+i; k<cnt; k+=size) g.queue.push(ids[k]);
   });
+}
+// уходят ВСЕ, кто сидит за столом: чаевые компании — одной монетой, довольные/сердитые
+function groupDepart(gr, angry){
+  const sitting = gr.members.filter(m=>m.state==='sitting');
+  if(!sitting.length) return;
+  const tip = sitting.reduce((t,m)=>t+(m.tipAccum||0), 0);
+  if(tip > 0){ const spot = tipDropSpot(sitting[0].seat); dropTipCoin(spot.x, spot.z, Math.round(tip)); }
+  sitting.forEach(m=>{
+    if(angry && m.orderState==='waiting'){ spawnFloater(m.root.position, 'ушёл 😠', '#ff6b7a'); gs.lost++; recordOutcome(false); }
+    else spawnFloater(m.root.position, '💚 доволен', '#8fe0a0', 1.1);
+    removeGuestUI(m); clearTableItems(m); m.tipAccum = 0; m.state = 'leaving';
+  });
+  saveGame(); updateHud();
 }
 function updateGroups(dt){
   for(let i=activeGroups.length-1; i>=0; i--){
     const gr = activeGroups[i];
     gr.members = gr.members.filter(g=>guests.includes(g));
     if(!gr.members.length){ activeGroups.splice(i,1); continue; }
+    // всё подано и съедено — короткая пауза и уходят вместе
+    if(gr.members.every(m=>m.state==='sitting' && m.orderState==='done')){
+      gr.doneT += dt;
+      if(gr.doneT >= GROUP_LEAVE_DELAY) groupDepart(gr, false);
+      continue;
+    }
     const stillWaiting = gr.members.filter(m=>m.state==='sitting' && m.orderState==='waiting');
     if(!stillWaiting.length) continue;
     const fearMult = (enro && enro.orderState==='waiting') ? ENRO_FEAR_MULT : 1;
     gr.patience -= dt*fearMult;
     stillWaiting.forEach(m=>{ if(m.patienceBar) setBarRatio(m.patienceBar, Math.max(0, gr.patience/gr.maxPatience)); });
-    if(gr.patience <= 0){
-      stillWaiting.forEach(m=>{
-        removeGuestUI(m);
-        spawnFloater(m.root.position, 'ушёл 😠', '#ff6b7a');
-        gs.lost++; recordOutcome(false);
-        m.state = 'leaving';
-      });
-      saveGame(); updateHud();
-    }
+    if(gr.patience <= 0) groupDepart(gr, true);
   }
 }
 
@@ -4645,6 +4706,7 @@ function walkStraight(g, tx, tz, dt, onArrive, ignoreSeatNear){
   g.root.position.y = Math.abs(Math.sin(g.walkT*2))*0.03;
 }
 function removeGuest(g){
+  clearTableItems(g);
   scene.remove(g.root);
   g.seat.occupied = false;
   if(g.seat.table) g.seat.table.occupiedCount--;
@@ -4801,6 +4863,14 @@ function updateGuest(g, dt){
           g.orderIcon = makeIconSprite(itemById(g.order).color, g.order);
           g.orderIcon.position.set(0, 2.05, 0);
           g.root.add(g.orderIcon);
+        } else if(g.groupState && !g.isEnro){
+          // компания: если у человека есть ещё позиция — заказывает её, иначе ждёт остальных (уйдут вместе, см. updateGroups)
+          if(g.queue && g.queue.length){
+            g.order = g.queue.shift(); g.orderState = 'waiting';
+            g.orderIcon = makeIconSprite(itemById(g.order).color, g.order);
+            g.orderIcon.position.set(0, 2.05, 0); g.root.add(g.orderIcon);
+            g.patienceBar = makeBarSprites(); g.patienceBar.spr.position.set(0, 2.05, 0); g.root.add(g.patienceBar.spr);
+          } else g.orderState = 'done';
         } else {
           if(g.isEnro){
             enro = null; enroCooldown = ENRO_COOLDOWN_AFTER;
@@ -4819,6 +4889,7 @@ function updateGuest(g, dt){
       }
     }
   } else if(g.state === 'leaving'){
+    clearTableItems(g); // встал — заказ со стола пропадает
     // те же самые точки, что и на вход, но в обратном порядке — от места к
     // двери. Первый шаг (ближайшая ко входу точка на месте) тоже без физики
     // своего стула, чтобы не тереться о него сразу при вставании
