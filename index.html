@@ -3326,6 +3326,12 @@ const GUEST_STAND_RADIUS = 0.85;
 // гость на диване большой кабинки сидит ВНУТРИ коллайдера дивана — кольцо точек вокруг него
 // всегда перекрыто мебелью, и официант шёл прямо в гостя и топтался. Подходим с торца дивана
 // (вдоль его длинной оси, на 0,55 м за краем), там проход
+// центр стола кабинки и его длинная ось (диваны идут вдоль длинных сторон)
+function boothGeom(seat){
+  const mates = BIGTABLE_SEATS.filter(s=>s.table === seat.table);
+  const cx = mates.reduce((t,s)=>t+s.x,0)/mates.length, cz = mates.reduce((t,s)=>t+s.z,0)/mates.length;
+  return { cx, cz, alongZ: Math.abs(seat.x - cx) > Math.abs(seat.z - cz) };
+}
 function boothEndPoint(g, fromX, fromZ){
   const seat = g.seat; if(!seat || !seat.table) return null;
   const mates = BIGTABLE_SEATS.filter(s=>s.table === seat.table);
@@ -4248,45 +4254,74 @@ function tableSurfaceY(x, z){
   for(const h of _tblRay.intersectObjects(tableTargets(), true)){ if(h.object.isMesh && h.point.y > 0.6 && h.point.y < 1.4) return h.point.y; }
   return null;
 }
-function tableSpot(seat, idx){
+function tableSpot(seat, idx, extras){
   const fx = Math.sin(seat.rotY), fz = Math.cos(seat.rotY), lx = fz, lz = -fx; // вперёд (к столу) и вбок
   let d0 = null;
   for(let d=0.25; d<=1.9; d+=0.04){ if(tableSurfaceY(seat.x+fx*d, seat.z+fz*d) != null){ d0 = d; break; } }
   if(d0 == null) return null;
   const lat = [0, 0.24, -0.24, 0.48, -0.48][idx % 5];
-  for(const extra of [0.3, 0.18, 0.08]){
+  for(const extra of (extras || [0.3, 0.18, 0.08])){
     const x = seat.x + fx*(d0+extra) + lx*lat, z = seat.z + fz*(d0+extra) + lz*lat, y = tableSurfaceY(x, z);
     if(y != null) return { x, z, y };
   }
   return null;
 }
+const HOOKAH_TABLE_SIZE = 0.55, HOOKAH_HALF_OFFSET = 0.375; // высота модели кальяна на столе; центр половины стола (стол 1.5 м → ±0.375)
+// кальян компании — по центру одной из двух половин стола (ближе к той, где сидит заказавший); всего не больше двух
+function placeHookahOnTable(g, item){
+  const gr = g.groupState, seat = g.seat, geo = boothGeom(seat);
+  const lat = geo.alongZ ? seat.z - geo.cz : seat.x - geo.cx;
+  const pref = lat > 0 ? 1 : 0, idx = !gr.slots[pref] ? pref : (!gr.slots[1-pref] ? 1-pref : -1);
+  if(idx < 0) return false;
+  const off = (idx === 1 ? 1 : -1) * HOOKAH_HALF_OFFSET;
+  const x = geo.alongZ ? geo.cx : geo.cx + off, z = geo.alongZ ? geo.cz + off : geo.cz, y = tableSurfaceY(x, z);
+  if(y == null) return false;
+  const m = makeDrinkModel(item.id, HOOKAH_TABLE_SIZE); if(!m) return false;
+  m.position.set(x, y + 0.005, z); m.userData.hookah = true; scene.add(m);
+  gr.slots[idx] = m; g._slot = idx; g.tableItems = g.tableItems || []; g.tableItems.push(m);
+  return true;
+}
+function removeHookahFromTable(g){
+  if(!g.tableItems) return;
+  g.tableItems = g.tableItems.filter(m=>{ if(m.userData.hookah){ dropObj(m); return false; } return true; });
+  if(g.groupState && g._slot != null){ g.groupState.slots[g._slot] = null; g._slot = null; }
+}
 function placeTableItem(g, item){
+  if(item.hookah && g.groupState && g.seat && g.seat.table && placeHookahOnTable(g, item)) return;
   if(!g.seat) return;
   g.tableItems = g.tableItems || [];
-  const spot = tableSpot(g.seat, g.tableItems.length); if(!spot) return;
+  const spot = tableSpot(g.seat, (g.tableItems || []).filter(m=>!m.userData.hookah).length, g.seat.table ? [0.16, 0.1, 0.06] : null); if(!spot) return;
   const m = makeDrinkModel(item.id, (PASS_SIZE[item.id] || PASS_H) * 0.8); if(!m) return;
   m.position.set(spot.x, spot.y + 0.005, spot.z); m.rotation.y = Math.random()*6.28;
   scene.add(m); g.tableItems.push(m);
 }
-function clearTableItems(g){ if(g.tableItems){ g.tableItems.forEach(dropObj); g.tableItems = null; } }
+function clearTableItems(g){ if(g.tableItems){ g.tableItems.forEach(dropObj); g.tableItems = null; } if(g.groupState && g._slot != null){ g.groupState.slots[g._slot] = null; g._slot = null; } }
 
 // ── КОМПАНИИ — как в 2D: общий заказ на всех (3–5 позиций, чаще есть кальян), общее терпение (в 1.6 раза дольше
 // одиночки), каждая позиция дороже ×1.8, чаевые копятся на компанию, уходят все вместе одной монетой чаевых
-const GROUP_PRICE_MULT = 1.8, GROUP_PATIENCE_MULT = 1.6, GROUP_HOOKAH_CHANCE = 0.55, GROUP_LEAVE_DELAY = 2.5, GROUP_PATIENCE_MIN = 45;
+const GROUP_PRICE_MULT = 1.8, GROUP_PATIENCE_MULT = 1.6, GROUP_HOOKAH_CHANCE = 0.55, GROUP_LEAVE_DELAY = 2.5, GROUP_PATIENCE_MIN = 45, GROUP_MAX_HOOKAHS = 2, GROUP_REFILL_CHANCE = 0.5, GROUP_MAX_REFILLS = 2;
 const activeGroups = [];
+// позиции заказа компании: первая — кальян с шансом 55%, остальные как у обычного гостя, но всего не больше 2 кальянов
+function rollGroupIds(cnt){
+  const ids = [];
+  for(let k=0; k<cnt; k++){
+    let id = (k===0 && gs.zoneUnlocked && Math.random() < GROUP_HOOKAH_CHANCE) ? HOOKAHS[(Math.random()*HOOKAHS.length)|0].id : rollOrderId();
+    let guard = 0;
+    while(itemById(id).hookah && ids.filter(x=>itemById(x).hookah).length >= GROUP_MAX_HOOKAHS && guard++ < 30) id = rollOrderId();
+    ids.push(id);
+  }
+  return ids;
+}
 function spawnGroup(){
   const table = activeBigTables().find(t=>t.occupiedCount===0);
   if(!table) return;
   const seats = BIGTABLE_SEATS.filter(s=>s.table===table);
   const size = Math.min(seats.length, 3 + ((Math.random()*2)|0)); // 3-4 человека
   const cnt = size + (Math.random() < 0.6 ? 1 : 0);              // 3-5 позиций на всех
-  const ids = [];
-  for(let k=0; k<cnt; k++){
-    ids.push((k===0 && gs.zoneUnlocked && Math.random() < GROUP_HOOKAH_CHANCE) ? HOOKAHS[(Math.random()*HOOKAHS.length)|0].id : rollOrderId());
-  }
+  const ids = rollGroupIds(cnt);
   const avgPat = ids.reduce((t,id)=>t+itemById(id).patience, 0) / ids.length;
   const pmax = Math.max(GROUP_PATIENCE_MIN, avgPat * GROUP_PATIENCE_MULT);
-  const groupState = { patience:pmax, maxPatience:pmax, members:[], doneT:0 };
+  const groupState = { patience:pmax, maxPatience:pmax, members:[], doneT:0, slots:[null,null], refills:0 };
   activeGroups.push(groupState);
   seats.slice(0, size).forEach((seat, i)=>{
     seat.occupied = true; table.occupiedCount++;
@@ -4864,7 +4899,17 @@ function updateGuest(g, dt){
           g.orderIcon.position.set(0, 2.05, 0);
           g.root.add(g.orderIcon);
         } else if(g.groupState && !g.isEnro){
-          // компания: если у человека есть ещё позиция — заказывает её, иначе ждёт остальных (уйдут вместе, см. updateGroups)
+          // компания: докурили кальян — он пропадает со стола, и с шансом заказывают новый (максимум 2 на столе одновременно:
+          // заказ первых кальянов ограничен, а новый появляется только взамен докуренного)
+          const fin = itemById(g.order);
+          if(fin && fin.hookah){
+            removeHookahFromTable(g);
+            if(g.groupState.refills < GROUP_MAX_REFILLS && Math.random() < GROUP_REFILL_CHANCE){
+              g.groupState.refills++; g.queue.unshift(g.order);
+              g.groupState.patience = Math.max(g.groupState.patience, g.groupState.maxPatience * 0.6); // свежий заказ — терпение подновилось
+            }
+          }
+          // если у человека есть ещё позиция — заказывает её, иначе ждёт остальных (уйдут вместе, см. updateGroups)
           if(g.queue && g.queue.length){
             g.order = g.queue.shift(); g.orderState = 'waiting';
             g.orderIcon = makeIconSprite(itemById(g.order).color, g.order);
