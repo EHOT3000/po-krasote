@@ -4082,6 +4082,7 @@ const ALL_SEAT_POOLS = [SEATS, TABLE_SEATS, GUESTBAR_SEATS, BIGTABLE_SEATS];
 // отладочные номера над местами/декором/метками: выключены; включить — SHOW_DEBUG_NUMBERS=true
 // или в консоли toggleDebugNumbers()
 let SHOW_DEBUG_NUMBERS = false;
+const SHOW_PLANT_NUMBERS = false; // номера растений видны всегда (пока выбираем модели/места); в публичной сборке build_dist.py ставит false
 const DEBUG_NUMBER_SPRITES = [];
 window.toggleDebugNumbers = ()=>{ SHOW_DEBUG_NUMBERS = !SHOW_DEBUG_NUMBERS; DEBUG_NUMBER_SPRITES.forEach(s=>{ s.visible = SHOW_DEBUG_NUMBERS; }); };
 function makeNumberLabel(text, hexColor){
@@ -5756,6 +5757,7 @@ function decorRow(kind, key, n, rowZ, step, tagY, build){
     const tag = makeNumberLabel(String(i+1), '#f3e9ff');
     tag.position.set(0, tagY, 0); tag.scale.set(0.4,0.4,1);
     g.add(tag);
+    if(key==='plants' && SHOW_PLANT_NUMBERS){ tag.visible = true; const di = DEBUG_NUMBER_SPRITES.indexOf(tag); if(di>=0) DEBUG_NUMBER_SPRITES.splice(di,1); tag.scale.set(0.55,0.55,1); }
     if(g.userData.activate) g.userData.activate(false);
     decorItems[key].push(g);
   }
