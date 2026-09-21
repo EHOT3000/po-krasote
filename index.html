@@ -1559,8 +1559,12 @@ const sofaMat = new THREE.MeshStandardMaterial({ color:0x8a7860, roughness:0.75 
 const sofaDarkMat = new THREE.MeshStandardMaterial({ color:0x675a48, roughness:0.75 });
 function makeSofa(x,z,length,rotY){
   const sideways = Math.abs(Math.round(rotY/(Math.PI/2))) % 2 === 1;
-  const g = makeItem(x, z, sideways?0.6:length, 0.76, sideways?length:0.6, 'диван');
+  // размеры в ЛОКАЛЬНЫХ осях (длинная сторона по X) — поворот учитывает updateColliderFor; раньше для
+  // боковых диванов (rotY=±90°) они менялись местами заранее, и поворот применялся ДВАЖДЫ: коллайдер
+  // лежал поперёк дивана (невидимая стена рядом, а сам диван проходим насквозь)
+  const g = makeItem(x, z, length, 0.76, 0.6, 'диван');
   g.rotation.y = rotY;
+  updateColliderFor(editables[editables.length-1]);
   const seat = new THREE.Mesh(new THREE.BoxGeometry(length,0.42,0.55), sofaMat);
   seat.position.y = 0.21; seat.castShadow = seat.receiveShadow = true;
   const back = new THREE.Mesh(new THREE.BoxGeometry(length,0.55,0.14), sofaDarkMat);
