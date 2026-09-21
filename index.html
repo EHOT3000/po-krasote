@@ -2034,22 +2034,14 @@ function applyLayoutData(){
     let saved;
     try { saved = JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null'); } catch(e){ saved = null; }
     LOADED_LAYOUT = Array.isArray(saved) ? saved : DEFAULT_LAYOUT;
-    // разовая миграция v3: диваны у столов возвращены на исходные места (сдвиг ломал маршруты и
-    // точки подхода) — в сохранённой планировке тоже: пары диванов снова ±0,95 от центра стола
+    // разовая миграция v4: диваны в сохранённой планировке — ровно на позиции из кода (ручной сдвиг ломал
+    // маршруты гостей, они нарисованы под эти места)
     try{
-      if(Array.isArray(saved) && localStorage.getItem('poKrasote3D_sofaShift_v3') !== '1'){
-        const sofas = saved.filter(o=>o.kind === 'диван');
-        for(let i=0; i+1<sofas.length; i+=2){
-          const A = sofas[i], B = sofas[i+1];
-          for(const ax of ['x','z']){ const o = ax === 'x' ? 'z' : 'x';
-            const sep = Math.abs(A[ax]-B[ax]);
-            if(Math.abs(A[o]-B[o]) < 0.05 && sep > 1.8 && sep < 2.4){
-              const lo = A[ax] < B[ax] ? A : B, hi = lo === A ? B : A, c = (A[ax]+B[ax])/2;
-              lo[ax] = c - 0.95; hi[ax] = c + 0.95; break; }
-          }
-        }
+      if(Array.isArray(saved) && localStorage.getItem('poKrasote3D_sofaShift_v4') !== '1'){
+        const dflt = DEFAULT_LAYOUT.filter(o=>o.kind === 'диван'), sofas = saved.filter(o=>o.kind === 'диван');
+        sofas.forEach((o,i)=>{ const d = dflt[i]; if(d){ o.x = d.x; o.y = d.y; o.z = d.z; o.rotY = d.rotY; o.sx = d.sx; o.sy = d.sy; o.sz = d.sz; } });
         localStorage.setItem(LAYOUT_KEY, JSON.stringify(saved));
-        localStorage.setItem('poKrasote3D_sofaShift_v3', '1');
+        localStorage.setItem('poKrasote3D_sofaShift_v4', '1');
       }
     }catch(e){}
   }
@@ -4065,7 +4057,7 @@ BIGTABLE_POS.forEach(t=>{
   offsets.forEach(([dx,dz])=>{
     const sx = p.x+dx, sz = p.z+dz;
     const rotY = Math.atan2(p.x-sx, p.z-sz); // лицом к центру стола
-    BIGTABLE_SEATS.push({ x:sx, z:sz, rotY, occupied:false, table, sitDy:-0.1, sitDz:0.15 });
+    BIGTABLE_SEATS.push({ x:sx, z:sz, rotY, occupied:false, table, sitDy:-0.1, sitDz:0.25 });
   });
 });
 // сквозная нумерация мест 1..45, тем же порядком, что и в route-lab.html —
