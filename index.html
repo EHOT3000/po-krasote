@@ -904,7 +904,7 @@ function scheduleMusicStep(){
 // склеен в бесшовную петлю через ffmpeg (acrossfade: последние 4 сек трека
 // плавно перетекают в первые 4 сек — играется как один файл, но конец
 // «замешан» с началом, поэтому цикл на loop=true не даёт щелчка/шва)
-const realMusicEl = new Audio('data:audio/mp4;base64,' + REAL_MUSIC_B64);
+const realMusicEl = new Audio('data:audio/mpeg;base64,' + REAL_MUSIC_B64);
 realMusicEl.loop = true;
 realMusicEl.volume = 0.55 * musicVol;
 realMusicEl.preload = 'auto';
@@ -1938,23 +1938,23 @@ const DEFAULT_LAYOUT = [
   {"kind":"круглый стол","x":-0.94,"y":0,"z":9.56,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"круглый стол","x":6.88,"y":0,"z":9.56,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стол","x":-6.28,"y":0,"z":3,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":-7.43,"y":0,"z":3,"rotX":0,"rotY":1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":-5.13,"y":0,"z":3,"rotX":0,"rotY":-1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":-7.23,"y":0,"z":3,"rotX":0,"rotY":1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":-5.33,"y":0,"z":3,"rotX":0,"rotY":-1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стол","x":-6.28,"y":0,"z":7,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":-7.43,"y":0,"z":7,"rotX":0,"rotY":1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":-5.13,"y":0,"z":7,"rotX":0,"rotY":-1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":-7.23,"y":0,"z":7,"rotX":0,"rotY":1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":-5.33,"y":0,"z":7,"rotX":0,"rotY":-1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стол","x":-6.28,"y":0,"z":11,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":-7.43,"y":0,"z":11,"rotX":0,"rotY":1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":-5.13,"y":0,"z":11,"rotX":0,"rotY":-1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":-7.23,"y":0,"z":11,"rotX":0,"rotY":1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":-5.33,"y":0,"z":11,"rotX":0,"rotY":-1.5707963267948966,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стол","x":7.32,"y":0,"z":-9.56,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":7.32,"y":0,"z":-10.71,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":7.32,"y":0,"z":-8.41,"rotX":0,"rotY":3.141592653589793,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":7.32,"y":0,"z":-10.51,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":7.32,"y":0,"z":-8.610000000000001,"rotX":0,"rotY":3.141592653589793,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стол","x":7.32,"y":0,"z":1.94,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":7.32,"y":0,"z":0.79,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":7.32,"y":0,"z":3.09,"rotX":0,"rotY":3.141592653589793,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":7.32,"y":0,"z":0.99,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":7.32,"y":0,"z":2.8899999999999997,"rotX":0,"rotY":3.141592653589793,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стол","x":7.32,"y":0,"z":5.5,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":7.32,"y":0,"z":4.35,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
-  {"kind":"диван","x":7.32,"y":0,"z":6.65,"rotX":0,"rotY":3.141592653589793,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":7.32,"y":0,"z":4.55,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
+  {"kind":"диван","x":7.32,"y":0,"z":6.45,"rotX":0,"rotY":3.141592653589793,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стул (заглушка)","x":3.36,"y":0,"z":6.66,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стул (заглушка)","x":3.4,"y":0,"z":5.08,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
   {"kind":"стул (заглушка)","x":1.36,"y":0,"z":4.1,"rotX":0,"rotY":0,"rotZ":0,"sx":1,"sy":1,"sz":1},
@@ -2030,20 +2030,22 @@ function applyLayoutData(){
     let saved;
     try { saved = JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null'); } catch(e){ saved = null; }
     LOADED_LAYOUT = Array.isArray(saved) ? saved : DEFAULT_LAYOUT;
-    // разовая миграция: диваны у столов отодвинуты на 0,2 м (гостям не хватало места сесть) —
-    // в СОХРАНЁННОЙ планировке тоже, иначе она перекрывает новые позиции из кода
+    // разовая миграция v3: диваны у столов возвращены на исходные места (сдвиг ломал маршруты и
+    // точки подхода) — в сохранённой планировке тоже: пары диванов снова ±0,95 от центра стола
     try{
-      if(Array.isArray(saved) && localStorage.getItem('poKrasote3D_sofaShift_v1') !== '1'){
+      if(Array.isArray(saved) && localStorage.getItem('poKrasote3D_sofaShift_v3') !== '1'){
         const sofas = saved.filter(o=>o.kind === 'диван');
         for(let i=0; i+1<sofas.length; i+=2){
           const A = sofas[i], B = sofas[i+1];
           for(const ax of ['x','z']){ const o = ax === 'x' ? 'z' : 'x';
-            if(Math.abs(A[o]-B[o]) < 0.05 && Math.abs(Math.abs(A[ax]-B[ax]) - 1.9) < 0.06){
-              const d = A[ax] < B[ax] ? -0.2 : 0.2; A[ax] += d; B[ax] -= d; break; }
+            const sep = Math.abs(A[ax]-B[ax]);
+            if(Math.abs(A[o]-B[o]) < 0.05 && sep > 1.8 && sep < 2.4){
+              const lo = A[ax] < B[ax] ? A : B, hi = lo === A ? B : A, c = (A[ax]+B[ax])/2;
+              lo[ax] = c - 0.95; hi[ax] = c + 0.95; break; }
           }
         }
         localStorage.setItem(LAYOUT_KEY, JSON.stringify(saved));
-        localStorage.setItem('poKrasote3D_sofaShift_v1', '1');
+        localStorage.setItem('poKrasote3D_sofaShift_v3', '1');
       }
     }catch(e){}
   }
@@ -3314,8 +3316,26 @@ const GUEST_STAND_RADIUS = 0.85;
 // pointBlocked (определена ниже, у сетки путей) сейчас тоже считает сидушки
 // препятствием — используем ту же функцию, отдельную для персонала заводить
 // не нужно
+// гость на диване большой кабинки сидит ВНУТРИ коллайдера дивана — кольцо точек вокруг него
+// всегда перекрыто мебелью, и официант шёл прямо в гостя и топтался. Подходим с торца дивана
+// (вдоль его длинной оси, на 0,55 м за краем), там проход
+function boothEndPoint(g, fromX, fromZ){
+  const seat = g.seat; if(!seat || !seat.table) return null;
+  const mates = BIGTABLE_SEATS.filter(s=>s.table === seat.table);
+  const cx = mates.reduce((t,s)=>t+s.x,0)/mates.length, cz = mates.reduce((t,s)=>t+s.z,0)/mates.length;
+  const alongZ = Math.abs(seat.x - cx) > Math.abs(seat.z - cz); // диван вытянут вдоль Z (левая колонка), иначе вдоль X
+  const half = 0.95 + 0.55; let best = null, bestD = Infinity;
+  for(const sgn of [-1, 1]){
+    const px = alongZ ? seat.x : cx + sgn*half, pz = alongZ ? cz + sgn*half : seat.z;
+    if(pointBlocked(px, pz)) continue;
+    const d = Math.hypot(px-fromX, pz-fromZ);
+    if(d < bestD){ bestD = d; best = { x:px, z:pz }; }
+  }
+  return best;
+}
 function approachPointNearGuest(g, fromX, fromZ){
   const gx = g.root.position.x, gz = g.root.position.z;
+  const booth = boothEndPoint(g, fromX != null ? fromX : gx, fromZ != null ? fromZ : gz); if(booth) return booth;
   const N = 16;
   const tryRing = (radius) => {
     let best=null, bestD=Infinity;
@@ -4563,8 +4583,9 @@ function walkTo(g, tx, tz, dt, onArrive, collisionMode){
     return;
   }
   const nx = dx/dist, nz = dz/dist;
-  g.root.position.x += nx*GUEST_SPEED*dt;
-  g.root.position.z += nz*GUEST_SPEED*dt;
+  const stepLen = Math.min(GUEST_SPEED*dt, dist); // не дальше цели — иначе шаг длиннее допуска 0.05 перескакивает точку туда-сюда до 6-сек страховки
+  g.root.position.x += nx*stepLen;
+  g.root.position.z += nz*stepLen;
   if(collisionMode !== false) resolveCollisions(g.root.position, PLAYER_RADIUS, typeof collisionMode==='object' ? collisionMode : null);
   const yaw = Math.atan2(nx, nz);
   turnToward(g.root, yaw, dt);
@@ -4603,8 +4624,9 @@ function walkStraight(g, tx, tz, dt, onArrive, ignoreSeatNear){
     return;
   }
   const nx = dx/dist, nz = dz/dist;
-  g.root.position.x += nx*GUEST_SPEED*dt;
-  g.root.position.z += nz*GUEST_SPEED*dt;
+  const stepLen = Math.min(GUEST_SPEED*dt, dist); // не дальше цели — иначе шаг длиннее допуска 0.05 перескакивает точку туда-сюда до 6-сек страховки
+  g.root.position.x += nx*stepLen;
+  g.root.position.z += nz*stepLen;
   resolveCollisions(g.root.position, PLAYER_RADIUS, ignoreSeatNear||null);
   const yaw = Math.atan2(nx, nz);
   turnToward(g.root, yaw, dt);
