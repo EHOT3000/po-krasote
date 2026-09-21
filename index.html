@@ -3161,7 +3161,7 @@ function cArm(m){ const by = {}; m.traverse(o=>{ if(o.isBone) by[o.name] = o; })
 // 3-й и 4-й числа: когда в клипе сидения (сек) таз опускается — сдвиг привязан к этому окну
 const C_CHAR_H = 2.1; // рост как у главного героя (1.7 * 1.25)
 // 5-е и 6-е — окно (сек), за которое модель выезжает вперёд: короче, чем опускание таза
-const C_SIT_OFF = { manA:[0.23,0.2,0,1.0,0,0.5], manB:[0.23,0.2,0,1.0,0,0.5], woman:[0.46,0.04,1.5,2.8,1.1,1.9] };
+const C_SIT_OFF = { manA:[0.23,0.2,0,1.0,0,0.45], manB:[0.23,0.2,0,1.0,0,0.45], woman:[0.46,0.04,1.5,2.8,1.5,2.8] }; // окно z подобрано замером: таз не «уезжает» относительно клипа (откл. <0.08)
 function makeSkinnedChar(kind, mode){
   const g = charTpl[kind]; if(!g) return null;
   const m = THREE.SkeletonUtils.clone(g.scene);
@@ -3205,9 +3205,11 @@ function sitSlide(g, dt){
   if(sk.kind === 'sit' && sk.cur){
     const tm = sk.cur.time, u = Math.min(1, Math.max(0, (tm - o[2]) / (o[3] - o[2]))), v = Math.min(1, Math.max(0, (tm - o[4]) / (o[5] - o[4])));
     sk.sitK = u * u * (3 - 2 * u); sk.zK = v * v * (3 - 2 * v);
-  } else { sk.sitK = Math.max(0, sk.sitK - dt / 0.25); sk.zK = Math.max(0, sk.zK - dt / 0.25); }
+    // добавка «ближе к столу» на диванах — быстрее основного сдвига (0.7 его окна)
+    const w = Math.min(1, Math.max(0, (tm - o[4]) / ((o[5] - o[4]) * 0.7))); sk.dK = w * w * (3 - 2 * w);
+  } else { sk.sitK = Math.max(0, sk.sitK - dt / 0.25); sk.zK = Math.max(0, sk.zK - dt / 0.25); sk.dK = Math.max(0, (sk.dK || 0) - dt / 0.25); }
   const dy = (g.seat && g.seat.sitDy) || 0, dz = (g.seat && g.seat.sitDz) || 0;
-  sk.m.position.z = (o[0] + dz) * sk.zK; sk.m.position.y = sk.baseY + (o[1] + dy) * sk.sitK;
+  sk.m.position.z = o[0] * sk.zK + dz * (sk.dK || 0); sk.m.position.y = sk.baseY + (o[1] + dy) * sk.sitK;
 }
 function updateSkinned(dt){
   guests.forEach(g=>{ if(g.sk){ g.sk.mixer.update(dt); sitSlide(g, dt); } });
