@@ -3158,6 +3158,13 @@ function cClip(clips, kind){
 const C_ARMS = [['UpperArmR','LowerArmR','WristR'],['UpperArmR','LowerArmR','PalmR'],['RightArm','RightForeArm','RightHand']];
 function cArm(m){ const by = {}; m.traverse(o=>{ if(o.isBone) by[o.name] = o; }); for(const s of C_ARMS){ if(s.every(n=>by[n])) return s.map(n=>by[n]); } return null; }
 // сдвиг модели при сидении [вперёд по z, вверх по y]: таз клипа сидения оказывается позади и ниже сиденья
+// ПОЗА СИДЕНИЯ — расставлена пользователем на витрина_посадки.html: смещение модели [вперёд z, вверх y] (м, рост 2,1)
+// относительно ЦЕНТРА сиденья на полу. Для дивана точка места гостя лежит на 0.25 позади центра дивана (SOFA_ROOT_BACK)
+const C_SEAT_POSE = {
+  stool:{ manA:[0.261,-0.005], manB:[0.261,-0.005], woman:[0.425,0.045] },
+  sofa: { manA:[0.275,-0.02],  manB:[0.265,-0.02],  woman:[0.522,-0.02] }
+};
+const SOFA_ROOT_BACK = 0.25;
 // 3-й и 4-й числа: когда в клипе сидения (сек) таз опускается — сдвиг привязан к этому окну
 const C_CHAR_H = 2.1; // рост как у главного героя (1.7 * 1.25)
 // 5-е и 6-е — окно (сек), за которое модель выезжает вперёд: короче, чем опускание таза
@@ -3171,7 +3178,7 @@ function makeSkinnedChar(kind, mode){
   const root = new THREE.Group(); root.add(m);
   const clips = {}; g.animations.forEach(a=>{ clips[a.name] = a; });
   const ch = { root, legL:new THREE.Group(), legR:new THREE.Group(), armL:new THREE.Group(), armR:new THREE.Group(), torsoRef:null, headRef:null,
-    sk:{ mixer:new THREE.AnimationMixer(m), clips, cur:null, kind:'', m, arm:cArm(m), outSign:0, baseY:m.position.y, sitK:0, sitOff:(C_SIT_OFF[kind]||[0,0,0,1,0,1]).map((v,i)=>i<2?v*C_CHAR_H/1.85:v), zK:0 } };
+    sk:{ mixer:new THREE.AnimationMixer(m), clips, cur:null, kind:'', m, arm:cArm(m), outSign:0, baseY:m.position.y, sitK:0, sitOff:(C_SIT_OFF[kind]||[0,0,0,1,0,1]), model:kind, zK:0 } };
   setAnim(ch, 'idle');
   return ch;
 }
@@ -3205,11 +3212,9 @@ function sitSlide(g, dt){
   if(sk.kind === 'sit' && sk.cur){
     const tm = sk.cur.time, u = Math.min(1, Math.max(0, (tm - o[2]) / (o[3] - o[2]))), v = Math.min(1, Math.max(0, (tm - o[4]) / (o[5] - o[4])));
     sk.sitK = u * u * (3 - 2 * u); sk.zK = v * v * (3 - 2 * v);
-    // добавка «ближе к столу» на диванах — быстрее основного сдвига (0.7 его окна)
-    const w = Math.min(1, Math.max(0, (tm - o[4]) / ((o[5] - o[4]) * 0.7))); sk.dK = w * w * (3 - 2 * w);
-  } else { sk.sitK = Math.max(0, sk.sitK - dt / 0.25); sk.zK = Math.max(0, sk.zK - dt / 0.25); sk.dK = Math.max(0, (sk.dK || 0) - dt / 0.25); }
-  const dy = (g.seat && g.seat.sitDy) || 0, dz = (g.seat && g.seat.sitDz) || 0;
-  sk.m.position.z = o[0] * sk.zK + dz * (sk.dK || 0); sk.m.position.y = sk.baseY + (o[1] + dy) * sk.sitK;
+  } else { sk.sitK = Math.max(0, sk.sitK - dt / 0.25); sk.zK = Math.max(0, sk.zK - dt / 0.25); }
+  const sofa = !!(g.seat && g.seat.table), P = (C_SEAT_POSE[sofa ? 'sofa' : 'stool'][sk.model]) || [0, 0];
+  sk.m.position.z = (P[0] + (sofa ? SOFA_ROOT_BACK : 0)) * sk.zK; sk.m.position.y = sk.baseY + P[1] * sk.sitK;
 }
 function updateSkinned(dt){
   guests.forEach(g=>{ if(g.sk){ g.sk.mixer.update(dt); sitSlide(g, dt); } });
@@ -4059,7 +4064,7 @@ BIGTABLE_POS.forEach(t=>{
   offsets.forEach(([dx,dz])=>{
     const sx = p.x+dx, sz = p.z+dz;
     const rotY = Math.atan2(p.x-sx, p.z-sz); // лицом к центру стола
-    BIGTABLE_SEATS.push({ x:sx, z:sz, rotY, occupied:false, table, sitDy:-0.1, sitDz:0.25 });
+    BIGTABLE_SEATS.push({ x:sx, z:sz, rotY, occupied:false, table });
   });
 });
 // сквозная нумерация мест 1..45, тем же порядком, что и в route-lab.html —
