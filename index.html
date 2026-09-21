@@ -4266,7 +4266,7 @@ function tableSpot(seat, idx, extras){
   }
   return null;
 }
-const HOOKAH_TABLE_SIZE = 0.55, HOOKAH_HALF_OFFSET = 0.375; // высота модели кальяна на столе; центр половины стола (стол 1.5 м → ±0.375)
+const HOOKAH_TABLE_SIZE = 0.37, HOOKAH_HALF_OFFSET = 0.375; // высота модели кальяна на столе; центр половины стола (стол 1.5 м → ±0.375)
 // кальян компании — по центру одной из двух половин стола (ближе к той, где сидит заказавший); всего не больше двух
 function placeHookahOnTable(g, item){
   const gr = g.groupState, seat = g.seat, geo = boothGeom(seat);
