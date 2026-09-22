@@ -139,6 +139,11 @@
     background:#1c1428; border:1px solid rgba(199,116,240,.35); border-radius:14px;
     padding:16px 18px; color:#e9dff5; font:14px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;
   }
+  .showcaseGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; }
+  .showcaseGrid .frame{ aspect-ratio:3/4; border:2px dashed rgba(199,116,240,.35); border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#7a6a94; }
+  .showcaseGrid .frame .n{ font:800 22px "Comfortaa",sans-serif; }
+  .showcaseGrid .frame .lbl{ font-size:10.5px; text-align:center; padding:0 6px; }
   .pkModal .head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px }
   .pkModal .head b{ color:#c774f0; font-size:16px }
   .pkModal .head button{
@@ -343,6 +348,7 @@
   <symbol id="i-up" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"/><path d="M5 20h14"/></symbol>
   <symbol id="i-meta" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6L3.4 9.3l6-.7z"/></symbol>
   <symbol id="i-log" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/></symbol>
+  <symbol id="i-showcase" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="7" height="9" rx="1.6"/><rect x="13" y="3.5" width="7" height="9" rx="1.6"/><rect x="4" y="14.5" width="7" height="6" rx="1.6"/><rect x="13" y="14.5" width="7" height="6" rx="1.6"/></symbol>
   <symbol id="i-pause" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round"><path d="M9 6v12M15 6v12"/></symbol>
   <symbol id="i-sound" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></symbol>
   <symbol id="i-soundoff" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M16 9.5l4 5M20 9.5l-4 5"/></symbol>
@@ -370,6 +376,7 @@
     <div class="stat" id="vibechip" style="display:none"></div>
     <div class="stat" id="modchip" style="display:none"></div>
     <div class="stat" id="boostchip" style="display:none"></div>
+    <div class="stat" id="rushchip" style="display:none"></div>
   </div>
 </div>
 <div id="sideCol">
@@ -395,6 +402,7 @@
   <button id="staffBtn" class="dk"><span class="bubble"><svg class="i"><use href="#i-staff"/></svg><span class="bdg" id="staffBadge" style="display:none"></span></span>Заведение</button>
   <button id="upgradesBtn" class="dk main"><span class="bubble"><svg class="i"><use href="#i-up"/></svg><span class="bdg" id="upgradesBadge" style="display:none"></span></span>Улучшения</button>
   <button id="metaBtn" class="dk"><span class="bubble"><svg class="i"><use href="#i-meta"/></svg><span class="bdg" id="metaBadge" style="display:none"></span></span>Мета</button>
+  <button id="showcaseBtn" class="dk"><span class="bubble"><svg class="i"><use href="#i-showcase"/></svg></span>Витрина</button>
   <button id="logBtn" class="dk"><span class="bubble"><svg class="i"><use href="#i-log"/></svg></span>Журнал</button>
 </div>
 <div id="goalsModal">
@@ -415,6 +423,11 @@
   <div class="head"><b>🌳 Мета-прокачка</b><button class="pkClose" data-modal="metaModal">✕</button></div>
   <div class="pkEventText">Постоянные апгрейды за наличные — не сбрасываются никогда (в 2D это дерево кормилось звёздами перерождения, но самого перерождения в 3D пока нет — сделано на обычной кассе).</div>
   <div id="metaList"></div>
+</div></div>
+<div id="showcaseModal" class="pkModal"><div class="box">
+  <div class="head"><b>🖼 Витрина</b><button class="pkClose" data-modal="showcaseModal">✕</button></div>
+  <div class="pkEventText">Здесь будут аватары, скины, сезонный пропуск и достижения — макет мест, наполним позже.</div>
+  <div id="showcaseGrid" class="showcaseGrid"></div>
 </div></div>
 <div id="eventModal" class="pkModal">
   <div class="box">
@@ -529,7 +542,6 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/loaders/OBJLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/controls/TransformControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="assets/music.js"></script>
 <script src="assets/chars.js"></script>
 <script src="assets/player.js"></script>
 <script>
@@ -708,13 +720,29 @@ const SFX = {
     playNoise(0.06,0.12,0.09,3600);
     playWarm(85,0.35,0.2,0,'sine',300);
   },
+  // ремонт заведения — короткая стройка «за кадром», пока камера отъехала и
+  // интерьер исчез: вразнобой стук молотка (короткие приглушённые удары шумом,
+  // тот же приём, что у «осколков» в smash) и пара гудящих рез пилой (sawtooth
+  // с падающей частотой — playWarm уже умеет плавный съезд через freqEnd)
+  renovate(){
+    vibrate([40,40,40,40,60,120]);
+    [0, 0.16, 0.34, 0.5, 0.72, 0.94].forEach(d=> playNoise(0.06, 0.22, d, 1300));
+    playWarm(190, 0.55, 0.13, 0.2, 'sawtooth', 1100, 260);
+    playWarm(210, 0.45, 0.10, 0.95, 'sawtooth', 1000, 240);
+  },
 };
 function applyMusicPrefs(){
-  // realMusicEl объявлен ниже по файлу, но вызывается уже из настроек, когда он точно есть
-  if(typeof realMusicEl === 'undefined') return;
-  realMusicEl.muted = musicMuted;
-  realMusicEl.volume = 0.55 * musicVol;
-  if(!musicMuted && musicOn) realMusicEl.play().catch(()=>{});
+  // djA/djB объявлены ниже по файлу, но вызывается уже из настроек, когда они точно есть
+  if(typeof djTargetVol === 'undefined') return;
+  djTargetVol = 0.55 * musicVol;
+  // раньше тумблер решал, запускать ли плеер вообще — если музыка была выключена
+  // в момент самого первого клика по странице (единственный момент, когда
+  // браузер разрешает включить звук), плееру так и не назначался трек, и
+  // включение тумблера потом уже ничего не запускало. Теперь плеер стартует
+  // ВСЕГДА при первом клике (см. startMusic), а тумблер только приглушает —
+  // здесь просто выставляем громкость/mute на уже играющий поток
+  djA.muted = musicMuted; djB.muted = musicMuted;
+  if(djActive) djActive.volume = musicMuted ? 0 : djTargetVol;
 }
 
 // ── ФОНОВЫЙ МУЗЫКАЛЬНЫЙ ЛУП ────────────────────────────────────────────
@@ -895,24 +923,79 @@ function scheduleMusicStep(){
   }
   musicTimer = setTimeout(scheduleMusicStep, 150);
 }
-// REAL_MUSIC_B64 -> assets/music.js
-// ── НАСТОЯЩИЙ ТРЕК (заменил процедурный луп выше) ───────────────────────
-// Автор прислал свою музыку — используем её вместо синтезированного джаз-лупа
-// (код процедурного лупа оставлен выше рабочим, просто не запускается: если
-// когда-нибудь понадобится вернуться на генеративную музыку — здесь одна
-// строчка). Трек сжат с исходных 320кбит (15.5МБ) до 128кбит (6.2МБ) и
-// склеен в бесшовную петлю через ffmpeg (acrossfade: последние 4 сек трека
-// плавно перетекают в первые 4 сек — играется как один файл, но конец
-// «замешан» с началом, поэтому цикл на loop=true не даёт щелчка/шва)
-const realMusicEl = new Audio('data:audio/mpeg;base64,' + REAL_MUSIC_B64);
-realMusicEl.loop = true;
-realMusicEl.volume = 0.55 * musicVol;
-realMusicEl.preload = 'auto';
-realMusicEl.muted = musicMuted;
+// ── ФОНОВАЯ МУЗЫКА — диджей-сет из 13 треков ────────────────────────────
+// Раньше тут был один трек, склеенный ffmpeg в бесшовную петлю и зашитый в
+// файл base64 (13 МБ текста). Теперь треков 13 (12 подобранных + тот самый
+// первый), общий вес ~170 МБ — зашивать такое в один HTML нельзя (браузер
+// долго парсит гигантскую base64-строку, а сама страница станет тяжелее
+// на два порядка). Поэтому файлы лежат рядом, в папке music/, и каждый
+// подгружается по мере надобности — как обычный <audio src="...">
+//
+// ВАЖНО: все эти треки — чужая музыка под авторским правом (проверено по
+// каждому — коммерческие релизы на лейблах). Годится для локальной работы
+// и тестов, НЕЛЬЗЯ пушить на публичную ссылку (GitHub Pages) и вообще
+// куда-либо, где это увидят посторонние — см. po-krasote-hosting в памяти
+const DJ_TRACKS = [
+  'music/00_original.mp3', 'music/01.mp3', 'music/02.mp3', 'music/03.mp3',
+  'music/04.mp3', 'music/05.mp3', 'music/06.mp3', 'music/07.mp3',
+  'music/08.mp3', 'music/09.mp3', 'music/10.mp3', 'music/11.mp3', 'music/12.mp3',
+];
+const DJ_CROSSFADE_S = 7; // длина перехода — как на диджейских сетах, не резкая склейка
+let djTargetVol = 0.55 * musicVol;
+const djA = new Audio(), djB = new Audio();
+[djA, djB].forEach(a=>{ a.preload = 'auto'; a.volume = 0; a.muted = musicMuted; });
+let djActive = djA, djNext = djB;
+let djBag = [], djLast = null, djCrossfading = false, djRaf = null;
+function djShuffleBag(){
+  // «мешок» вместо чистого рандома — тасуем всю колоду, играем по кругу,
+  // тасуем заново: так не бывает долгих серий без какого-то трека и не
+  // бывает одного и того же дважды подряд
+  const bag = DJ_TRACKS.slice();
+  for(let i=bag.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [bag[i],bag[j]]=[bag[j],bag[i]]; }
+  if(bag[0] === djLast && bag.length>1){ [bag[0],bag[1]] = [bag[1],bag[0]]; }
+  return bag;
+}
+function djPickNext(){
+  if(!djBag.length) djBag = djShuffleBag();
+  const t = djBag.shift();
+  djLast = t;
+  return t;
+}
+function djStartCrossfade(){
+  if(djCrossfading) return;
+  djCrossfading = true;
+  djNext.src = djPickNext();
+  djNext.currentTime = 0; djNext.volume = 0;
+  djNext.play().catch(()=>{});
+  const fromEl = djActive, toEl = djNext, t0 = performance.now(), dur = DJ_CROSSFADE_S*1000;
+  const fromStart = fromEl.volume;
+  (function step(){
+    const k = Math.min(1, (performance.now()-t0)/dur);
+    fromEl.volume = fromStart * (1-k);
+    toEl.volume = djTargetVol * k;
+    if(k < 1){ djRaf = requestAnimationFrame(step); return; }
+    fromEl.pause(); fromEl.currentTime = 0; fromEl.volume = 0;
+    djActive = toEl; djNext = fromEl;
+    djCrossfading = false;
+  })();
+}
+function djTick(){
+  if(!musicOn || musicMuted || djCrossfading) return;
+  const el = djActive;
+  if(el.duration && !isNaN(el.duration) && el.duration - el.currentTime <= DJ_CROSSFADE_S) djStartCrossfade();
+}
+setInterval(djTick, 500);
 function startMusic(){
   if(musicOn) return;
   musicOn = true;
-  if(!musicMuted) realMusicEl.play().catch(()=>{});
+  // всегда запускаем поток при первом клике, даже если музыка сейчас выключена
+  // тумблером (просто тихо/muted) — это единственный момент, когда браузер
+  // вообще разрешает стартовать звук без нового жеста пользователя, так что
+  // тумблер дальше работает мгновенно, не дожидаясь следующего клика
+  if(!djActive.src) djActive.src = djPickNext();
+  djActive.muted = musicMuted;
+  djActive.volume = musicMuted ? 0 : djTargetVol;
+  djActive.play().catch(()=>{});
 }
 // тряска камеры — магнитуда линейно затухает до нуля за camShakeDur секунд,
 // применяется в animate() ПОСЛЕ обычного camera.lookAt (см. ниже), чтобы не
@@ -1129,8 +1212,15 @@ function farWall(w, d, x, z){
       new THREE.MeshStandardMaterial({ color:0x6fe6c9, emissive:0x6fe6c9, emissiveIntensity:1.4 }));
     sconce.position.set(sx, WALL_H*0.55, sz);
     scene.add(sconce);
-    const pl = new THREE.PointLight(0x6fe6c9, 0.4, 2.6);
-    pl.position.copy(sconce.position); scene.add(pl);
+    if(!LOW_GFX){
+      const pl = new THREE.PointLight(0x6fe6c9, 0.4, 2.6);
+      pl.position.copy(sconce.position); scene.add(pl);
+    } else {
+      // слабый режим: без настоящего света (каждый источник утяжеляет все материалы) — мягкое свечение-плоскость на стене
+      const gl = haloPlane(0x6fe6c9, 1.0, 1.0, 0.32); gl.position.copy(sconce.position);
+      if(long){ gl.position.z += 0.17; } else { gl.rotation.y = Math.PI/2; gl.position.x += 0.17; }
+      scene.add(gl);
+    }
   }
   addCollider(x, z, w/2, d/2);
   return m;
@@ -2172,7 +2262,7 @@ function pickEnroOrder(){
 const GAME_KEY = 'poKrasote3D_game_v1';
 const gs = { cash:0, earned:0, level:1, xp:0, served:0, lost:0,
   zoneUnlocked:false, kitchenUnlocked:false, carryCap:1,
-  hookahsServed:0, foodServed:0, goalIx:0, playSec:0,
+  hookahsServed:0, foodServed:0, goalIx:0, goalsClaimed:[], playSec:0,
   recipe:{}, enroIntroShown:false, tutorialDone:false,
   stars:0, starsClaimed:0, prestigeMult:1, reborns:0,
   meta:{ income:0, staff:0, cost:0, charm:0 },
@@ -2210,6 +2300,12 @@ try{
   if(savedN) for(const k in gs.n){ if(typeof savedN[k]==='number' && Number.isFinite(savedN[k])) gs.n[k] = savedN[k]; }
   if(savedMeta) for(const k in gs.meta){ if(typeof savedMeta[k]==='number' && Number.isFinite(savedMeta[k])) gs.meta[k] = savedMeta[k]; }
   if(savedRecipe && typeof savedRecipe==='object') gs.recipe = savedRecipe;
+  // цели раньше засчитывались строго по очереди (goalIx — один указатель): 10 уровень,
+  // достигнутый раньше найма официанта, награду не давал, пока не подойдёт очередь.
+  // Теперь каждая цель — сама по себе (goalsClaimed[i]), порядок значения не имеет.
+  // Старые сохранения хранят только goalIx — переносим их в goalsClaimed один раз
+  if(!Array.isArray(gs.goalsClaimed)) gs.goalsClaimed = [];
+  if(gs.goalIx > gs.goalsClaimed.length) for(let i=0;i<gs.goalIx;i++) gs.goalsClaimed[i] = true;
 }catch(e){}
 function saveGame(){ try{ localStorage.setItem(GAME_KEY, JSON.stringify(gs)); }catch(e){} }
 function xpNeed(){ return 20 + gs.level*14; }
@@ -2226,7 +2322,24 @@ function gainXp(v){
   if(leveled) SFX.levelUp();
   saveGame(); updateHud();
 }
-function bank(v){ gs.cash += v; gs.earned += v; saveGame(); updateHud(); }
+function bank(v){
+  gs.cash += v; gs.earned += v;
+  if(v > 0){ _earnLog.push({ t:gs.playSec, v }); if(_earnLog.length > 400) _earnLog.shift(); }
+  saveGame(); updateHud();
+}
+// «доход за последние N игровых минут» — скользящее окно, не общий счётчик за
+// всю игру (тот слишком медленно реагирует после ремонта и на волнах спроса).
+// Нужно для штрафов «в минутах дохода» вместо «% кассы» (см. enroDamageAmount)
+const _earnLog = [];
+const EARN_WINDOW_S = 90;
+function recentIncomePerMin(){
+  const now = gs.playSec;
+  while(_earnLog.length && now - _earnLog[0].t > EARN_WINDOW_S) _earnLog.shift();
+  if(!_earnLog.length) return 0;
+  const span = Math.max(1, Math.min(EARN_WINDOW_S, now - _earnLog[0].t));
+  const sum = _earnLog.reduce((s,e)=> s+e.v, 0);
+  return sum / span * 60;
+}
 let _lastHudCash = null;
 // до 10 млн — полное число, дальше «12,5 млн / 3,40 млрд», чтобы плашка не разъезжалась
 function fmtHudMoney(n){
@@ -2281,6 +2394,13 @@ const GOALS = [
   { t:'Заработай $250 000 всего',      done:()=>gs.earned>=250000 },
   { t:'Обслужи 100 гостей',            done:()=>gs.served>=100 },
 ];
+// награда — своя у каждой цели (не 40×номер-по-очереди): ранние ступени найма
+// стоят реальных денег (бармен $550, официант $1500 на первом найме), и премия
+// $120/$160 плоской формулы была по фидбэку смехотворно мала рядом с ценой.
+// Дальше — примерно пропорционально тому, сколько цель стоит/сколько до неё идти
+const GOAL_REWARDS = [
+  40, 70, 170, 450, 150, 180, 350, 250, 90, 900, 500, 3000, 150, 1300, 3000, 700,
+];
 // цели больше не засчитываются автоматически — по просьбе: как только условие
 // выполнено, награда просто ЖДЁТ в окне «Цели», пока её не заберут руками.
 // Само окно тоже не закрывается само — только по крестику
@@ -2298,7 +2418,7 @@ function setBadge(id, on){
 }
 function canBuyLevel(def){
   if(def.requires && !def.requires()) return false;
-  if((gs.n[def.key]||0) >= def.max) return false;
+  if((gs.n[def.key]||0) >= defMax(def)) return false;
   return gs.cash >= levelCost(def);
 }
 function updateDockBadges(){
@@ -2317,15 +2437,16 @@ function updateDockBadges(){
   setBadge('metaBadge', metaStars || renovate);
 }
 function advanceGoals(){
-  // ничего не начисляем сами — только подсвечиваем кнопку, если готова награда
-  const badge = el('goalsBadge');
-  const ready = gs.goalIx < GOALS.length && GOALS[gs.goalIx].done();
+  // ничего не начисляем сами — только подсвечиваем кнопку, если готова хотя бы
+  // одна награда. Цели теперь независимы: любая, что выполнена и не забрана —
+  // «горит», не дожидаясь своей очереди
+  const ready = GOALS.some((g,i)=> !gs.goalsClaimed[i] && g.done());
   setBadge('goalsBadge', ready);
 }
 function claimGoal(i){
-  if(i !== gs.goalIx || !GOALS[i] || !GOALS[i].done()) return;
-  gs.goalIx++;
-  const bonus = 40 * gs.goalIx;
+  if(gs.goalsClaimed[i] || !GOALS[i] || !GOALS[i].done()) return;
+  gs.goalsClaimed[i] = true;
+  const bonus = GOAL_REWARDS[i] || 40;
   gs.cash += bonus; gs.earned += bonus;
   SFX.levelUp(); // тот же сигнал, что и у уровня — см. список-звуков.md
   spawnFloater(player.root.position, '✅ ЦЕЛЬ! +$'+bonus, '#5be0a0');
@@ -2333,18 +2454,26 @@ function claimGoal(i){
   saveGame(); updateHud(); refreshGoalsModal(); advanceGoals();
 }
 function refreshGoalsModal(){
-  el('goalsList').innerHTML = GOALS.map((g,i)=>{
-    const bonus = 40*(i+1);
+  // порядок: сначала то, что готово забрать (самое важное сейчас), потом
+  // ещё не выполненное, а уже забранное — в самый конец, чтобы не маячило
+  // вверху и не мешало видеть, что реально можно сделать прямо сейчас
+  const order = GOALS.map((g,i)=>i).sort((a,b)=>{
+    const rank = i => gs.goalsClaimed[i] ? 2 : (GOALS[i].done() ? 0 : 1);
+    return rank(a) - rank(b);
+  });
+  el('goalsList').innerHTML = order.map(i=>{
+    const g = GOALS[i];
+    const bonus = GOAL_REWARDS[i] || 40;
     const reward = `<div class="reward">🎁 награда: $${bonus.toLocaleString('ru-RU')}</div>`;
-    if(i < gs.goalIx){
+    if(gs.goalsClaimed[i]){
       // уже забрано
       return `<div class="goalRow claimed"><div class="txt"><div>✅ ${g.t}</div>${reward}</div><button class="claimed">Получено</button></div>`;
     }
-    if(i === gs.goalIx && g.done()){
-      // достигнуто, ждёт, чтобы забрали
+    if(g.done()){
+      // достигнуто, ждёт, чтобы забрали — независимо от других целей
       return `<div class="goalRow"><div class="txt"><div>🎁 ${g.t}</div>${reward}</div><button class="ready" onclick="claimGoal(${i})">Получить</button></div>`;
     }
-    // ещё не дошёл до этого этапа
+    // ещё не выполнена
     return `<div class="goalRow"><div class="txt"><div>${g.t}</div>${reward}</div><button class="locked">Получить</button></div>`;
   }).join('');
 }
@@ -2358,12 +2487,19 @@ function updateHud2(){
   el('hudRatingNum').textContent = r;
   const pmEl = el('hudPayMul');
   pmEl.textContent = '×'+pm.toFixed(1);
-  pmEl.style.color = pm > 1.01 ? '#5be0a0' : pm < 0.99 ? '#ff6b7a' : '#b39cc9';
+  // раньше красили только ТЕКСТ плашки в зелёный/красный — а фон у неё и так
+  // зелёный (.pill .mul{background:var(--cool)}), поэтому «доход выше нормы»
+  // красил текст почти в тот же зелёный, что и фон — цифры сливались. Теперь
+  // меняем сам фон плашки, а текст остаётся тёмным и читаемым на любом из них
+  pmEl.style.background = pm > 1.01 ? '#5be0a0' : pm < 0.99 ? '#ff6b7a' : '';
+  pmEl.style.color = '#06121a';
   const s = Math.floor(gs.playSec);
   el('hudTime').textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
   const cpm = gs.playSec>3 ? Math.round(gs.earned/gs.playSec*60) : 0;
   el('hudCpmNum').textContent = cpm.toLocaleString('ru-RU');
-  el('hudGoalTxt').textContent = gs.goalIx < GOALS.length ? GOALS[gs.goalIx].t : 'все цели ✓';
+  { const readyN = GOALS.reduce((n,g,i)=> n + ((!gs.goalsClaimed[i] && g.done())?1:0), 0);
+    const nextIx = GOALS.findIndex((g,i)=> !gs.goalsClaimed[i] && !g.done());
+    el('hudGoalTxt').textContent = readyN>0 ? ('🎁 готово: '+readyN) : (nextIx>=0 ? GOALS[nextIx].t : 'все цели ✓'); }
   const vx = el('vibechip');
   if(vibe()>0){ vx.style.display=''; vx.textContent = '✨ уют '+Math.round(vibe())+'% (×'+vibeMult().toFixed(2)+')'; }
   else vx.style.display='none';
@@ -2375,6 +2511,10 @@ function updateHud2(){
   if(boostUntil > performance.now()){
     bc.style.display=''; bc.textContent = '⚡ ×'+boostMult+'  '+Math.ceil((boostUntil-performance.now())/1000)+'с';
   } else bc.style.display='none';
+  const rc = el('rushchip');
+  if(inRush()){
+    rc.style.display=''; rc.textContent = '🔥 час пик '+Math.ceil(rushUntil-gs.playSec)+'с';
+  } else rc.style.display='none';
 }
 
 // цветные спрайты-иконки над головой (что заказали / что несёт игрок) —
@@ -2707,7 +2847,10 @@ const STATION_RANGE = 0.55, SERVE_RANGE = 2.8;
 const WING_REACH = 1.9;
 
 // что несёт игрок сейчас (готовый напиток/кальян/блюдо на подносе) — null, если пусто
-const CARRY_MAX = 14; // как в 2D (state.n.carry>=14)
+// было 14 ступеней — стенд показал, что эффект «в руки» почти не ощущается
+// после первых нескольких (упор в места/раздачу, не в переноску), поздние
+// ступени были почти пустыми. Сократили до значимых 7 (было — как в 2D)
+const CARRY_MAX = 7;
 function carryCost(){ return Math.round(140 * Math.pow(1.8, gs.n.carry||0)); }
 let carrying = [];       // теперь массив — можно нести несколько за раз (апгрейд)
 // player объявлен НИЖЕ по файлу (const, временная мёртвая зона) — нельзя
@@ -3078,7 +3221,9 @@ const HIRE_MAX = { bar:3, hookah:3, cook:3, waiter:4 };
 // 25000 на паровую зону — по фидбэку слишком долго копить (331 минута игры,
 // всё ещё без пара, скучно даже с другими покупками параллельно). Снижено втрое
 const ZONE_COST = 10000, KITCHEN_COST = 100000, KITCHEN_LEVEL = 20;
-const PREP_MAX=14, MOVE_MAX=14, PRICEUP_MAX=18, VIBE_LEVEL=6;
+// скорость игрока — было 14 ступеней, сократили до 6 значимых (та же причина,
+// что у «в руки»: поздние ступени почти не ощущались на фоне остального)
+const PREP_MAX=14, MOVE_MAX=6, PRICEUP_MAX=18, VIBE_LEVEL=6;
 // у декора теперь свой максимум на тип (по просьбе): колонок 8, ламп 6, цветов 5.
 // Картин 4 (не апгрейд, просто декор). Меняя эти числа, помни: расстановка
 // пользователя матчится по (kind, N-й) — лишние сохранённые позиции просто
@@ -3285,6 +3430,17 @@ function pickupCap(slot){
 function trayCost(){ return Math.round(120*Math.pow(1.7, gs.n.tray||0)); }
 function trayFCost(){ return Math.round(180*Math.pow(1.7, gs.n.trayF||0)); }
 const TRAY_MAX = 16, TRAYF_MAX = 16;
+// полка раньше росла сама по себе на 16 своих ступеней, независимо от того,
+// сколько вообще гостей может сидеть одновременно — проверено стендом: при
+// базовых 4 местах раздача из 22 ячеек заполняется в среднем на 17%, то есть
+// большая часть купленных ступеней просто пустует. Теперь потолок полки
+// растёт вместе с местами (столы/стулья/кабинки), а не отдельно от них —
+// сколько реально может понадобиться одновременно, полка примерно столько и
+// может вместить (с запасом на пиковый час, см. rushSpawnMult)
+function totalExtraSeats(){ return (gs.n.stool||0) + (gs.n.table||0)*2 + (gs.n.bigtable||0)*3; }
+function trayMaxNow(){ return Math.min(TRAY_MAX, 3 + Math.floor(totalExtraSeats()/2)); }
+function trayFMaxNow(){ return Math.min(TRAYF_MAX, 3 + Math.floor(totalExtraSeats()/2)); }
+function defMax(def){ return typeof def.max === 'function' ? def.max() : def.max; }
 const pickupSlots = { bar:[], cook:[] }; // каждый — массив { id, color, icon }, до pickupCap(slot) штук
 function dropSlotFor(role){ return role==='cook' ? 'cook' : 'bar'; } // кальянщик тоже кладёт на барный спот
 function spotWorldPos(slot){
@@ -3754,17 +3910,30 @@ function levelCost(def){ return Math.round(def.costFn() * metaCostMult()); }
 function doBuyLevel(key){
   const def = findLevelDef(key); if(!def) return;
   if(def.requires && !def.requires()) return;
-  const n = gs.n[key]||0; if(n>=def.max) return;
+  const n = gs.n[key]||0; if(n>=defMax(def)) return;
   const c = levelCost(def); if(gs.cash < c) return;
   gs.cash -= c; gs.n[key] = n+1; saveGame(); updateHud();
-  if(key==='light' || key==='sound' || key==='plants') refreshComfortDecor();
+  if(key==='light' || key==='sound' || key==='plants'){
+    refreshComfortDecor();
+    // n — сколько было ДО покупки, значит новый предмет — decorItems[key][n]
+    const steps = [], g = decorItems[key][n]; if(g) steps.push(revealStep(g, key));
+    if(key==='plants'){
+      if(n < 3 && paintingItems[n]) steps.push(revealStep(paintingItems[n], 'art'));   // вместе с растением открывается очередная картина
+      if(n === 3 && neonSaturn) steps.push(revealStep(neonSaturn.g, 'neon'));          // …а с 4-м растением — неоновый Сатурн
+    }
+    queueReveal(steps);
+  }
 }
 function levelRowHTML(def){
   if(def.requires && !def.requires()) return shopRow({label:def.label, desc:def.desc, locked:true, lockedReason:def.reqText});
-  const n = gs.n[def.key]||0;
-  if(n>=def.max) return shopRow({label:def.label, desc:def.desc, maxed:true, maxedText:'максимум'});
+  const n = gs.n[def.key]||0, max = defMax(def);
+  if(n>=max){
+    // полка: потолок растёт вместе с местами — «максимум» тут временный, а не окончательный
+    const growable = (def.key==='tray' || def.key==='trayF') && max < TRAY_MAX;
+    return shopRow({label:def.label, desc:def.desc, maxed:true, maxedText: growable ? `${n}/${max} — купи ещё мест, чтобы открыть дальше` : 'максимум'});
+  }
   // счётчик вида «2/9» — сколько уже куплено из максимума (по просьбе)
-  return shopRow({label:def.label, desc:def.desc, cost:levelCost(def), count:n+'/'+def.max, onclick:`doBuyLevel('${def.key}')`});
+  return shopRow({label:def.label, desc:def.desc, cost:levelCost(def), count:n+'/'+max, onclick:`doBuyLevel('${def.key}')`});
 }
 function refreshStaffModal(){
   const h = t => `<div style="margin:12px 0 4px;color:var(--muted);font:700 .8rem 'Comfortaa',sans-serif">${t}</div>`;
@@ -3781,14 +3950,17 @@ function refreshStaffModal(){
 
 // ── ОСТАЛЬНЫЕ УЛУЧШЕНИЯ ──────────────────────────────────────────────────
 const UPGRADE_DEFS = [
-  { key:'tray', label:'🍹 Полка напитков', desc:'+1 место на раздаче бара — бармен реже простаивает без места', costFn:trayCost, max:TRAY_MAX },
-  { key:'trayF', label:'🍲 Полка кухни', desc:'+1 место на раздаче кухни', costFn:trayFCost, max:TRAYF_MAX, requires:()=>gs.kitchenUnlocked, reqText:'нужна кухня' },
-  { key:'prep', label:'⚡ Станции быстрее', desc:'−8% времени готовки на всех станциях за уровень', costFn:prepCost, max:PREP_MAX },
-  { key:'move', label:'🏃 Твоя скорость', desc:'только твоя скорость передвижения, +14% за уровень', costFn:moveCost, max:MOVE_MAX },
-  { key:'priceUp', label:'✨ Премиум-меню', desc:'+15% к цене вообще всех позиций меню за уровень', costFn:priceUpCost, max:PRICEUP_MAX },
+  { key:'tray', label:'🍹 Полка напитков', desc:'+1 место на раздаче бара — бармен реже простаивает без места. Растёт вместе с местами для гостей', costFn:trayCost, max:trayMaxNow },
+  { key:'trayF', label:'🍲 Полка кухни', desc:'+1 место на раздаче кухни. Растёт вместе с местами для гостей', costFn:trayFCost, max:trayFMaxNow, requires:()=>gs.kitchenUnlocked, reqText:'нужна кухня' },
+  // «уют» (свет/музыка/декор) — раньше стоял в самом низу списка и до него мало
+  // кто докачивал руками (по фидбэку); поднят выше, сразу после полок, чтобы
+  // визуал/атмосфера бросались в глаза раньше, а не были «последним, что купил»
   { key:'light', label:'💡 Свет и лампы', desc:'+уют зала — дороже чек и щедрее гости', costFn:lightCost, max:LIGHT_MAX, requires:()=>gs.level>=VIBE_LEVEL, reqText:`разблокируется на ур. ${VIBE_LEVEL}` },
   { key:'sound', label:'🎵 Музыка', desc:'+уют зала — дороже чек и щедрее гости', costFn:soundCost, max:SOUND_MAX, requires:()=>gs.level>=VIBE_LEVEL, reqText:`разблокируется на ур. ${VIBE_LEVEL}` },
   { key:'plants', label:'🪴 Зелень и декор', desc:'+уют зала — дороже чек и щедрее гости', costFn:plantsCost, max:PLANT_MAX, requires:()=>gs.level>=VIBE_LEVEL, reqText:`разблокируется на ур. ${VIBE_LEVEL}` },
+  { key:'prep', label:'⚡ Станции быстрее', desc:'−8% времени готовки на всех станциях за уровень', costFn:prepCost, max:PREP_MAX },
+  { key:'move', label:'🏃 Твоя скорость', desc:'только твоя скорость передвижения, +14% за уровень', costFn:moveCost, max:MOVE_MAX },
+  { key:'priceUp', label:'✨ Премиум-меню', desc:'+15% к цене вообще всех позиций меню за уровень', costFn:priceUpCost, max:PRICEUP_MAX },
 ];
 function carryRowHTML(){
   const desc = 'сможешь нести больше заказов в руках за один раз';
@@ -3857,11 +4029,19 @@ function metaRowHTML(def){
 }
 // ── РЕМОНТ ЗАВЕДЕНИЯ — «reborn» из 2D (grantPrestigeStars/districtReset):
 // полный сброс прогресса ОДНОЙ этой локации (уровень/касса/персонал/
-// апгрейды/рецепты/гости), взамен доход навсегда ×1.8 (компаундится) и
-// звёзды в мета-дерево. В 2D был ЕЩЁ и переезд в новый район — в 3D пока
-// только одна локация, так что переезда нет, только повторный ремонт
-// той же самой
-const RELOC_LEVEL = 12, RELOC_BASE = 30000, RELOC_GROWTH = 2.5, REBORN_MULT = 1.8;
+// апгрейды/рецепты/гости), взамен доход растёт и звёзды идут в мета-дерево.
+// В 2D был ЕЩЁ и переезд в новый район — в 3D пока только одна локация, так
+// что переезда нет, только повторный ремонт той же самой (это нормально —
+// часть игроков просто любит эту локацию и делает ремонт сколько хочет)
+//
+// было ×1.8 КАЖДЫЙ раз (компаундится): 12-й ремонт давал ×1157 — цены на
+// апгрейды при этом не менялись вообще, и через 3 ремонта они становились
+// не глубокой дороже дохода. Теперь прибавка АДДИТИВНАЯ: каждый ремонт
+// добавляет фиксированные +80% (первый ремонт всё ещё даёт знакомые ×1.8,
+// как и раньше), без компаундинга — 12-й даёт ×10.6, а не ×1157. Расти
+// можно бесконечно (никакого потолка на число ремонтов), просто без взрыва
+const RELOC_LEVEL = 12, RELOC_BASE = 30000, RELOC_GROWTH = 2.5, REBORN_STEP = 0.8;
+function prestigeMultAt(n){ return 1 + REBORN_STEP * n; }
 function relocCost(){ return Math.round(RELOC_BASE * Math.pow(RELOC_GROWTH, gs.reborns||0)); }
 // фикс. расписание звёзд за ремонт (по просьбе): 1-й ремонт даёт 5, каждый
 // следующий на +2 больше — 5, 7, 9, 11... (gs.reborns тут ещё НЕ увеличен).
@@ -3877,22 +4057,25 @@ function renovateRowHTML(){
   if(!gs.zoneUnlocked) return shopRow({label:'🔨 Ремонт заведения', desc, locked:true, lockedReason:'нужна паровая зона'});
   if(gs.level < RELOC_LEVEL) return shopRow({label:'🔨 Ремонт заведения', desc, locked:true, lockedReason:`разблокируется на ур. ${RELOC_LEVEL}`});
   const cost = relocCost();
-  const label = `🔨 Ремонт заведения ${gs.reborns?('· сделано '+gs.reborns+'×'):''} → доход ×${(gs.prestigeMult*REBORN_MULT).toFixed(1)}`;
+  const label = `🔨 Ремонт заведения ${gs.reborns?('· сделано '+gs.reborns+'×'):''} → доход ×${prestigeMultAt((gs.reborns||0)+1).toFixed(1)}`;
   return shopRow({label, desc, cost, onclick:'doRenovate()'});
 }
 function doRenovate(){
   const cost = relocCost();
   if(!gs.zoneUnlocked || gs.level < RELOC_LEVEL || gs.cash < cost) return;
-  if(!confirm('Затеять ремонт №'+(gs.reborns+1)+' за $'+cost.toLocaleString('ru-RU')+'?\n\nПрогресс заведения (уровень, зоны, персонал, апгрейды, рецепты) сбросится. Доход навсегда станет ×'+(gs.prestigeMult*REBORN_MULT).toFixed(1)+', и ты получишь ⭐ звёзды в мета-дерево.')) return;
+  if(!confirm('Затеять ремонт №'+(gs.reborns+1)+' за $'+cost.toLocaleString('ru-RU')+'?\n\nПрогресс заведения (уровень, зоны, персонал, апгрейды, рецепты) сбросится. Доход навсегда станет ×'+prestigeMultAt((gs.reborns||0)+1).toFixed(1)+', и ты получишь ⭐ звёзды в мета-дерево.')) return;
   gs.cash -= cost;
-  const gained = grantPrestigeStars(rebornStarReward());
-  gs.prestigeMult *= REBORN_MULT;
-  gs.reborns = (gs.reborns||0) + 1;
-  renovateReset();
-  spawnFloater(player.root.position, '🔨 Ремонт №'+gs.reborns+'! Доход ×'+gs.prestigeMult.toFixed(1), '#5be0a0', 1.4);
-  spawnFloater({x:player.root.position.x, y:0, z:player.root.position.z+0.5}, '+'+gained+' ⭐', '#ffcf4a');
-  logEvent('🔨', `Ремонт №${gs.reborns}. Заведение обновлено, доход навсегда ×${gs.prestigeMult.toFixed(1)}, +${gained} ⭐ звёзд. Прогресс сброшен.`, 'good');
-  saveGame(); updateHud();
+  closePkModal('metaModal'); // чтобы окно магазина не загораживало вид на отъезжающую камеру
+  startRenovateFx(()=>{
+    const gained = grantPrestigeStars(rebornStarReward());
+    gs.reborns = (gs.reborns||0) + 1;
+    gs.prestigeMult = prestigeMultAt(gs.reborns);
+    renovateReset();
+    spawnFloater(player.root.position, '🔨 Ремонт №'+gs.reborns+'! Доход ×'+gs.prestigeMult.toFixed(1), '#5be0a0', 1.4);
+    spawnFloater({x:player.root.position.x, y:0, z:player.root.position.z+0.5}, '+'+gained+' ⭐', '#ffcf4a');
+    logEvent('🔨', `Ремонт №${gs.reborns}. Заведение обновлено, доход навсегда ×${gs.prestigeMult.toFixed(1)}, +${gained} ⭐ звёзд. Прогресс сброшен.`, 'good');
+    saveGame(); updateHud();
+  });
 }
 // сброс прогресса — НЕ трогает: мета-прокачку (gs.meta — вся суть ремонта в
 // том, что она остаётся), звёзды/reborns/prestigeMult (только что начислены
@@ -3900,7 +4083,7 @@ function doRenovate(){
 function renovateReset(){
   gs.cash = 0; gs.xp = 0; gs.level = 1;
   gs.zoneUnlocked = false; gs.kitchenUnlocked = false;
-  gs.served = 0; gs.lost = 0; gs.hookahsServed = 0; gs.foodServed = 0; gs.goalIx = 0;
+  gs.served = 0; gs.lost = 0; gs.hookahsServed = 0; gs.foodServed = 0; gs.goalIx = 0; gs.goalsClaimed = [];
   gs.earned = 0; // playSec НЕ трогаем — это счётчик времени в игре за сессию, не прогресса района
   gs.recipe = {};
   gs.carryCap = 1;
@@ -3940,13 +4123,20 @@ function closePkModal(id){ el(id).style.display = 'none'; userPaused = false; }
 el('staffBtn').addEventListener('click', ()=> openPkModal('staffModal', refreshStaffModal));
 el('upgradesBtn').addEventListener('click', ()=> openPkModal('upgradesModal', refreshUpgradesModal));
 el('metaBtn').addEventListener('click', ()=> openPkModal('metaModal', refreshMetaModal));
+el('showcaseBtn').addEventListener('click', ()=> openPkModal('showcaseModal', refreshShowcaseModal));
+function refreshShowcaseModal(){
+  // макет: 12 пустых рамок под будущие аватары/скины/сезонку/ачивки — сами
+  // карточки наполним позже, сейчас решаем только форму и место в игре
+  const g = el('showcaseGrid'); if(g.childElementCount) return;
+  g.innerHTML = Array.from({length:12}, (_,i)=>`<div class="frame"><div class="n">${i+1}</div><div class="lbl">пусто</div></div>`).join('');
+}
 el('boostBtn').addEventListener('click', ()=> openPkModal('boostModal', refreshBoostModal));
 el('settingsBtn').addEventListener('click', ()=> openPkModal('settingsModal'));
 el('mapBtn').addEventListener('click', ()=> showToast('🗺', 'Карта франшизы откроется позже'));
 document.querySelectorAll('.pkClose').forEach(b=>{
   b.addEventListener('click', ()=> closePkModal(b.dataset.modal));
 });
-['staffModal','upgradesModal','metaModal','boostModal','settingsModal'].forEach(id=>{
+['staffModal','upgradesModal','metaModal','showcaseModal','boostModal','settingsModal'].forEach(id=>{
   el(id).addEventListener('click', e=>{ if(e.target.id===id) closePkModal(id); });
 });
 
@@ -4407,9 +4597,19 @@ function pickOne(arr){ return arr[(Math.random()*arr.length)|0]; }
 // «разгром» масштабируется с прогрессом заведения — как в 2D: рано, пока
 // заведение крошечное, урон меньше, чтобы не ломало старт напрочь
 // урон при разгроме — по фидбэку слишком больно, если проигнорировать
-// (было 15/25/50%), снижено
-function enroDamagePct(){
-  return gs.zoneUnlocked ? 0.35 : (gs.n.bar>=1 ? 0.18 : 0.10);
+// (было 15/25/50%, потом снижено до 10/18/35% от КАССЫ). Проблема штрафа в
+// %% кассы: он не завязан на скорость заработка — одна и та же сумма на
+// руках может быть заработана за минуту или за час, а штраф не отличает.
+// Теперь — «минуты дохода»: берём реальный темп заработка за последние 90
+// игровых секунд (recentIncomePerMin) и забираем N минут этого темпа. Рано,
+// пока темп ещё почти нулевой (только сел бармен), подстраховка — процент
+// кассы, чтобы штраф не обнулялся из-за отсутствия истории
+const ENRO_DAMAGE_MIN = ()=> gs.zoneUnlocked ? 4 : (gs.n.bar>=1 ? 2.5 : 1.5);
+function enroDamageAmount(){
+  const perMin = recentIncomePerMin();
+  let dmg = Math.round(perMin * ENRO_DAMAGE_MIN());
+  if(dmg <= 0) dmg = Math.round(gs.cash * 0.08); // нет ещё истории дохода — подстраховка
+  return Math.min(dmg, gs.cash);
 }
 const ENRO_ACTS = [
   'разбил витрину с сиропами 🍾', 'выбил входное стекло ногой 🪟',
@@ -4869,19 +5069,19 @@ function updateGuest(g, dt){
           }
         }
         if(g.rageT >= g.rageLimit){
-          // «разгром» — как в 2D: Энро психует и забирает процент кассы,
-          // процент растёт вместе с заведением (иначе на позднем этапе штраф
-          // становится смешным и Энро перестаёт быть опасным)
-          const pct = enroDamagePct();
-          const dmg = Math.round(gs.cash * pct);
+          // «разгром» — как в 2D: Энро психует и забирает деньги. Забирает не
+          // % кассы (это не масштабируется с темпом заработка), а N минут
+          // текущего дохода — см. ENRO_DAMAGE_MIN/enroDamageAmount выше
+          const dmg = enroDamageAmount();
+          const dmgMin = ENRO_DAMAGE_MIN();
           gs.cash = Math.max(0, gs.cash - dmg);
           saveGame(); updateHud();
           SFX.smash(); triggerShake(0.35, 0.4);
           removeGuestUI(g);
           const act = pickOne(ENRO_ACTS);
           spawnFloater(g.root.position, act, '#ff6b7a');
-          spawnFloater(g.root.position, '−$'+dmg+' (−'+Math.round(pct*100)+'%)', '#ff3b4a');
-          logEvent('🧨', `Энро психанул на ${g.drunk+1}-м заказе: ${act}. Забрал −$${dmg} (−${Math.round(pct*100)}% кассы).`, 'bad');
+          spawnFloater(g.root.position, '−$'+dmg+' (~'+dmgMin+' мин дохода)', '#ff3b4a');
+          logEvent('🧨', `Энро психанул на ${g.drunk+1}-м заказе: ${act}. Забрал −$${dmg} (~${dmgMin} мин дохода).`, 'bad');
           enro = null; enroCooldown = ENRO_COOLDOWN_AFTER;
           g.state = 'leaving';
         }
@@ -4978,11 +5178,32 @@ function updateGuest(g, dt){
 // (было 4-8 — зал ощущался пустоватым на фоне того, как часто заходит Энро,
 // у которого спавн не тормозится занятостью зала вообще, см. ENRO_CHANCE выше)
 let spawnTimer = 5;
+// ── ЧАС ПИК — раньше поток гостей был ровным весь день, из-за чего раздача
+// физически не могла забиться (проверено стендом: при 3 барменах и полке на
+// 22 места заполнение в среднем 17% — упор не в персонал, а в то, что
+// гостей одновременно мало). Теперь периодами гостей идёт заметно больше —
+// тогда полка реально забивается и есть смысл бегать разносить, как раньше
+// в 2D. В затишье между волнами — спокойно, без гонки
+const RUSH_MULT = 2.4;
+let rushUntil = 0, rushNextAt = 150;
+function inRush(){ return gs.playSec < rushUntil; }
+function rushSpawnMult(){ return inRush() ? RUSH_MULT : 1; }
+function updateRush(){
+  if(gs.level < 5) return; // не в туторе и не в самом начале
+  if(inRush()) return;
+  if(gs.playSec >= rushNextAt){
+    const dur = 45 + Math.random()*30;
+    rushUntil = gs.playSec + dur;
+    rushNextAt = rushUntil + 180 + Math.random()*120; // следующий час пик через 3-5 минут после этого
+    logEvent('🔥', `Час пик! Гости идут заметно чаще — есть смысл поторопиться.`, 'good');
+  }
+}
 function updateSpawner(dt){
+  updateRush();
   if(enroCooldown > 0) enroCooldown -= dt;
   spawnTimer -= dt;
   if(spawnTimer <= 0){
-    spawnTimer = (3 + Math.random()*3) / modSpawnMult();
+    spawnTimer = (3 + Math.random()*3) / (modSpawnMult() * rushSpawnMult());
     if(trySpawnEnro()) return; // Энро — со своим стулом, независимо от занятости зала
     const groupsReady = gs.zoneUnlocked && gs.level>=8
       && activeBigTables().some(t=>t.occupiedCount===0);
@@ -5732,7 +5953,7 @@ function animate(){
   }
   const dt = Math.min(clock.getDelta(), 0.05);
   updatePassVisuals();
-  if(!userPaused){ updateSkinned(dt); updateDecorFx(dt); updateNeon(dt); }
+  if(!userPaused){ updateSkinned(dt); updateDecorFx(dt); updateNeon(dt); updatePopFx(dt); }
   const effSpeed = gameSpeed * (boostUntil > performance.now() ? boostMult : 1);
   if(!userPaused) for(let i=0; i<effSpeed; i++) simStep(dt);
 
@@ -5740,9 +5961,17 @@ function animate(){
   // на реальном dt, не завязана на gameSpeed (иначе на ×10 дёргается)
   // камера игнорирует вертикальное покачивание персонажа при ходьбе (y=0),
   // иначе тряслась вместе с ним — держим её на фиксированной высоте
-  const desired = new THREE.Vector3(player.root.position.x, 0, player.root.position.z).add(CAM_OFFSET);
-  camera.position.lerp(desired, 1-Math.pow(0.001, dt));
-  camera.lookAt(player.root.position.clone().add(new THREE.Vector3(0,1,0)));
+  // показ покупки: пока окно магазина закрыто и очередь не пуста — камера летит к предмету, держит ~1.3 с и возвращается к игроку
+  if(!userPaused && !editMode){
+    if(camFocus){ camFocus.t += dt; if(camFocus.t > camFocus.hold) startNextReveal(); }
+    else if(revealQueue.length) startNextReveal();
+  }
+  updateRenovateFx(dt); // тикает независимо от паузы — открытое окно не должно тормозить уже начатую анимацию
+  const tx = camFocus ? camFocus.x : player.root.position.x, tz = camFocus ? camFocus.z : player.root.position.z;
+  camZoom += (camZoomTarget - camZoom) * Math.min(1, dt*1.6);
+  const desired = new THREE.Vector3(tx, 0, tz).add(CAM_OFFSET.clone().multiplyScalar(camZoom));
+  camera.position.lerp(desired, 1-Math.pow(camFocus ? 0.0002 : 0.001, dt));
+  camera.lookAt(new THREE.Vector3(tx, 1, tz));
   // тряска камеры (см. triggerShake) — применяется ПОСЛЕ lookAt, чисто
   // визуальный дребезг поверх обычного слежения, магнитуда угасает до нуля
   if(camShakeT > 0){
@@ -5780,13 +6009,85 @@ function plantAttach(g){
   m.scale.multiplyScalar(PLANT_TARGET_H[i] / h); g.updateMatrixWorld(true);
   bb = new THREE.Box3().setFromObject(m); const c = bb.getCenter(new THREE.Vector3());
   m.position.set(m.position.x - c.x + g.position.x, m.position.y - bb.min.y, m.position.z - c.z + g.position.z); // основание на пол, по центру группы
-  g.userData.plantModel = m; g.userData.plantPlaceholder.forEach(o=>{ o.visible = false; });
+  g.userData.plantModel = m; g.userData.plantPlaceholder.forEach(o=>{ o.visible = false; o.userData.keepHidden = true; });
 }
 Object.keys(PLANT_MODELS_B64).forEach(k=>{
   new THREE.GLTFLoader().parse(b64ToArrayBuffer(PLANT_MODELS_B64[k]), '', gl=>{ PLANT_TPL[k] = gl.scene; decorItems.plants.forEach(g=>plantAttach(g)); }, e=>console.error('растение', k, e));
 });
 
 // ── АНИМАЦИИ: пузырьки над кальяном на столе (случайными вспышками) и звуковые волны колонок ──
+// ── ПОКАЗ ПОКУПКИ: после покупки предмета интерьера камера плавно летит к нему (когда закрыто окно магазина), вспышка, и возвращается
+let camFocus = null; const revealQueue = []; const popFxList = [];
+// ── РЕМОНТ КАК ПОКАЗ — камера отъезжает почти на весь зал, интерьер «пуфает»
+// прочь под белую вспышку (ровно в этот момент и происходит настоящий сброс
+// состояния — снаружи это не видно), пауза, и вторая вспышка открывает уже
+// обновлённый — пустой — зал; камера возвращается на обычную дистанцию
+let camZoom = 1, camZoomTarget = 1, renovateFx = null;
+const renovateFlashEl = document.createElement('div');
+renovateFlashEl.style.cssText = 'position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:950;';
+document.body.appendChild(renovateFlashEl);
+function renovateFlash(){
+  renovateFlashEl.style.transition = 'opacity .1s ease';
+  renovateFlashEl.style.opacity = '1';
+  setTimeout(()=>{ renovateFlashEl.style.transition = 'opacity .7s ease'; renovateFlashEl.style.opacity = '0'; }, 120);
+}
+function startRenovateFx(afterReset){
+  renovateFx = { phase:'out', t:0, afterReset, flashed:false };
+  camZoomTarget = 2.3;
+  try{ SFX.renovate(); }catch(e){}
+}
+function updateRenovateFx(dt){
+  if(!renovateFx) return;
+  const f = renovateFx; f.t += dt;
+  if(f.phase === 'out'){
+    if(f.t >= 0.9 && !f.flashed){ f.flashed = true; renovateFlash(); f.afterReset(); }
+    if(f.t >= 1.3){ f.phase = 'hold'; f.t = 0; }
+  } else if(f.phase === 'hold'){
+    if(f.t >= 0.5){ f.phase = 'in'; f.t = 0; camZoomTarget = 1; renovateFlash(); }
+  } else if(f.phase === 'in'){
+    if(f.t >= 1.0) renovateFx = null;
+  }
+}
+function revealStep(g, kind){
+  g.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(g), c = b.getCenter(new THREE.Vector3());
+  return { x:c.x, y:Math.min(2.2, Math.max(0.3, c.y)), z:c.z, color:{ light:0xffc36a, sound:0x5a8cff, plants:0x6ee08a, art:0xff8fe0, neon:0xd83bff }[kind] || 0xffffff, hold:1.25 };
+}
+function queueReveal(steps){ if(editMode || !steps.length) return; steps.forEach(st=>revealQueue.push(st)); }
+function startNextReveal(){
+  const st = revealQueue.shift(); if(!st){ camFocus = null; return; }
+  camFocus = { x:st.x, z:st.z, t:0, hold:st.hold };
+  spawnPopFx(st.x, st.y, st.z, st.color); try{ SFX.unlock(); }catch(e){}
+}
+function spawnPopFx(x, y, z, color){
+  if(LOW_GFX) return;
+  const sparks = [], tex = popSparkTex(color);
+  for(let i=0;i<10;i++){
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false }));
+    const a = Math.random()*Math.PI*2, sp = 0.5 + Math.random()*0.9;
+    spr.position.set(x, y, z); spr.userData = { vx:Math.cos(a)*sp, vy:0.3 + Math.random()*0.8, vz:Math.sin(a)*sp, t:0, life:0.7 + Math.random()*0.4, size:0.16 + Math.random()*0.14 };
+    spr.scale.set(0.01,0.01,1); spr.renderOrder = 8; scene.add(spr); sparks.push(spr);
+  }
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 40), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.8, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending }));
+  ring.position.set(x, y, z); ring.renderOrder = 8; ring.lookAt(camera.position); scene.add(ring);
+  popFxList.push({ sparks, ring, t:0 });
+}
+const _popTex = {};
+function popSparkTex(color){
+  if(_popTex[color]) return _popTex[color];
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const h = '#'+color.toString(16).padStart(6,'0');
+  const g = x.createRadialGradient(32,32,1,32,32,32); g.addColorStop(0,'#fff'); g.addColorStop(0.3,h); g.addColorStop(1,h+'00'); x.fillStyle = g; x.fillRect(0,0,64,64);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return (_popTex[color] = t);
+}
+function updatePopFx(dt){
+  for(let i=popFxList.length-1;i>=0;i--){
+    const f = popFxList[i]; f.t += dt; let alive = false;
+    f.sparks.forEach(sp=>{ const u = sp.userData; u.t += dt; const k = u.t/u.life; if(k >= 1){ sp.visible = false; return; } alive = true;
+      sp.position.x += u.vx*dt; sp.position.y += u.vy*dt; sp.position.z += u.vz*dt; u.vy -= 0.6*dt;
+      sp.material.opacity = k < 0.2 ? k/0.2 : 1-(k-0.2)/0.8; const s = u.size*(0.6+k*0.8); sp.scale.set(s,s,1); });
+    const rk = f.t/0.8; if(rk < 1){ alive = true; f.ring.scale.setScalar(1 + rk*4.5); f.ring.material.opacity = 0.8*(1-rk); } else f.ring.visible = false;
+    if(!alive){ f.sparks.forEach(sp=>{ scene.remove(sp); sp.material.dispose(); }); scene.remove(f.ring); f.ring.geometry.dispose(); f.ring.material.dispose(); popFxList.splice(i,1); }
+  }
+}
 let DECOR_FX_ON = false; // включается после первой загрузки декора: анимации появления играют только при ПОКУПКЕ, не при загрузке сохранения
 const decorFx = { hookahs:[], speakers:[] };
 const bubbleGeo = new THREE.SphereGeometry(1, 10, 8);
@@ -5929,7 +6230,7 @@ let neonSaturn = null;
   // ореолы и подсветка стены
   const h1 = haloPlane(0x7a3bff, 3.4, 2.4, 0.6); h1.position.set(0, cy, -0.045); g.add(h1); // за трубками, но перед стеной (стена: z=-11.85, вывеска: -11.76)
   const h2 = haloPlane(NEON_RING, 2.4, 1.1, 0.4); h2.position.set(0, cy, -0.04); g.add(h2);
-  const wl = new THREE.PointLight(0x6a4bff, 0.35, 3.0); wl.position.set(0, cy, 0.9); g.add(wl);
+  let wl = null; if(!LOW_GFX){ wl = new THREE.PointLight(0x6a4bff, 0.35, 3.0); wl.position.set(0, cy, 0.9); g.add(wl); }
   neonSaturn = { g, halos:[h1, h2], light:wl, t:Math.random()*10 };
 }
 function updateNeon(dt){
@@ -5937,7 +6238,7 @@ function updateNeon(dt){
   const n = neonSaturn; n.t += dt;
   // едва заметное «дыхание» свечения и редкое короткое подмигивание, как у настоящей неоновой вывески
   const breathe = 1 + Math.sin(n.t*1.4)*0.06, flick = (Math.sin(n.t*0.37)*Math.sin(n.t*2.3) > 0.985) ? 0.7 : 1;
-  n.halos[0].material.opacity = 0.6*breathe*flick; n.halos[1].material.opacity = 0.4*breathe*flick; n.light.intensity = 0.35*breathe*flick;
+  n.halos[0].material.opacity = 0.6*breathe*flick; n.halos[1].material.opacity = 0.4*breathe*flick; if(n.light) n.light.intensity = 0.35*breathe*flick;
 }
 const DECOR_STAGE = toScene(340, 540); // центр стенда — открытый пол перед баром
 const decorItems = { light:[], sound:[], plants:[] };
@@ -5971,8 +6272,12 @@ decorRow('лампа-бра', 'light', LIGHT_MAX, 0.0, 0.62, 2.35, g=>{
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06,12,12),
     new THREE.MeshStandardMaterial({ color:0xffe6b4, emissive:0xe8a355, emissiveIntensity:0 }));
   bulb.position.set(0,1.58,0.16); g.add(bulb);
-  const pl = new THREE.PointLight(0xe8a355, 0, 3.2); pl.position.set(0,1.6,0.35); g.add(pl);
-  g.userData.activate = on=>{ bulb.material.emissiveIntensity = on?2.0:0; pl.intensity = on?1.0:0; };
+  // настоящий свет остаётся в сцене ВСЕГДА (яркость 0, пока лампа не куплена): число источников не меняется, поэтому покупка
+  // лишь меняет яркость одного света и не пересобирает шейдеры всех материалов (это и вызывало зависание)
+  let pl = null, glow = null;
+  if(!LOW_GFX){ pl = new THREE.PointLight(0xe8a355, 0, 3.2); pl.position.set(0,1.6,0.35); g.add(pl); }
+  else { glow = haloPlane(0xe8a355, 1.5, 1.7, 0.42); glow.position.set(0, 1.55, 0.05); g.add(glow); }
+  g.userData.activate = on=>{ bulb.material.emissiveIntensity = on?2.0:0; if(pl) pl.intensity = on?1.0:0; if(glow) glow.visible = on; };
 });
 // колонка: НАСТЕННАЯ — тёмная площадка у стены + корпус на кронштейне,
 // наклонён вниз «в зал» (как настоящая PA-колонка). Синие диффузоры — синий
@@ -5995,9 +6300,11 @@ decorRow('колонка', 'sound', SOUND_MAX, 1.05, 0.62, 2.0, g=>{
       new THREE.MeshStandardMaterial({ color:0x0033ff, emissive:0x0033ff, emissiveIntensity:0 }));
     c.position.set(0,cy,0.145); spk.add(c); diff.push(c.material);
   });
-  const pl = new THREE.PointLight(0x0033ff, 0, 2.8); pl.position.set(0,1.3,0.6); g.add(pl);
+  let pl = null, glow = null;
+  if(!LOW_GFX){ pl = new THREE.PointLight(0x0033ff, 0, 2.8); pl.position.set(0,1.3,0.6); g.add(pl); }
+  else { glow = haloPlane(0x2b5cff, 1.6, 1.5, 0.34); glow.position.set(0, 1.4, 0.06); g.add(glow); }
   const fxE = addSpeakerWaves(g, spk, diff);
-  g.userData.activate = on=>{ diff.forEach(m=> m.emissiveIntensity = on?1.6:0); pl.intensity = on?0.55:0; speakerSwitched(fxE, on); };
+  g.userData.activate = on=>{ diff.forEach(m=> m.emissiveIntensity = on?1.6:0); if(pl) pl.intensity = on?0.55:0; if(glow) glow.visible = on; speakerSwitched(fxE, on); };
 });
 // растение: тёмный горшок + листья (серые «в ожидании», зелёные когда куплено)
 decorRow('растение', 'plants', PLANT_MAX, 2.1, 0.62, 1.15, (g, i)=>{
@@ -6054,14 +6361,19 @@ function setPaintingImage(idx, b64){
 }
 setPaintingImage(0, PAINTING1_B64); setPaintingImage(1, PAINTING2_B64); setPaintingImage(2, PAINTING3_B64);
 // не купленный декор скрыт совсем; в режиме редактора показываем всё, чтобы можно было расставить
+function setDecorShown(g, on){
+  g.visible = true;
+  g.children.forEach(c=>{ if(c.isLight || c.isSprite || c.userData.keepHidden) return; c.visible = on; }); // номера-метки (спрайты) и заглушки растений не трогаем
+}
 function refreshComfortDecor(){
-  const show = (g,on)=>{ g.visible = on || editMode; };
+  // ВАЖНО: скрываем не всю группу, а её содержимое — сами источники света остаются видимыми (яркость 0) и число света в сцене не меняется
+  const show = (g,on)=> setDecorShown(g, on || editMode);
   ['light','sound','plants'].forEach(k=> decorItems[k].forEach((g,i)=>{
     const on = i < (gs.n[k]||0);
     g.userData.activate(on); show(g,on);
   }));
   paintingItems.forEach((g,i)=> show(g, i < (gs.n.plants||0)));
-  if(neonSaturn) neonSaturn.g.visible = (gs.n.plants||0) >= 4 || editMode; // на месте бывшей 4-й картины: открывается тем же уровнем зелени
+  if(neonSaturn) setDecorShown(neonSaturn.g, (gs.n.plants||0) >= 4 || editMode); // на месте бывшей 4-й картины: открывается тем же уровнем зелени
 }
 
 // декор зала (лампы/колонки/растения/картины) — это новые editables, созданные
@@ -6081,6 +6393,11 @@ fitWingDecor();
   whenTpl('hood', ()=>{ const m = drinkTpl.hood.obj.clone(true); m.scale.set(0.62, 0.35, 0.62); m.position.set(0, 1.9, 0.5); hood.add(m); });
 }
 buildNavGrid(); // строим сетку проходимости один раз, когда вся мебель уже на местах
+// прогрев: одним кадром показываем ВЕСЬ декор (лампы, колонки, растения, картины, неон), чтобы шейдеры и текстуры подготовились сейчас, а не в момент покупки
+{ const all = [...decorItems.light, ...decorItems.sound, ...decorItems.plants, ...paintingItems, neonSaturn.g];
+  all.forEach(g=>setDecorShown(g, true));
+  try{ renderer.compile(scene, camera); renderer.render(scene, camera); }catch(e){}
+  all.forEach(g=>setDecorShown(g, false)); }
 refreshComfortDecor(); // подсвечиваем уже купленные уровни декора из сохранения
 DECOR_FX_ON = true; // дальше активации — это покупки: играем анимацию появления колонки
 updateHud();
