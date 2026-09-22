@@ -5358,6 +5358,29 @@ addEventListener('pointermove', (e)=>{
 addEventListener('pointerup', joyEnd);
 addEventListener('pointercancel', joyEnd);
 
+// ── КЛАВИАТУРА — WASD/стрелки, для игры на компьютере без джойстика на
+// экране. Не трогаем сам джойстик (holding/stickDX/stickDY) — просто в
+// simStep ниже подмешиваем клавиши как ЕЩЁ ОДИН источник направления,
+// приоритетно, если хоть одна зажата
+const moveKeys = new Set();
+// e.code — физическая клавиша по её МЕСТУ на клавиатуре, не зависит от
+// раскладки (e.key для букв зависит: при русской раскладке физическая W даёт
+// e.key==='ц', и WASD переставали работать, хотя ArrowUp и т.п. не пострадали,
+// у них key и так не зависит от языка — отсюда и была разница «стрелки работают, WASD нет»)
+const KB_MOVE_MAP = { KeyW:'up', ArrowUp:'up', KeyS:'down', ArrowDown:'down', KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
+addEventListener('keydown', e=>{
+  const dir = KB_MOVE_MAP[e.code]; if(!dir) return;
+  if(editMode || routeMode) return; // в редакторе/разметке маршрута клавиши не двигают персонажа
+  moveKeys.add(dir);
+});
+addEventListener('keyup', e=>{
+  const dir = KB_MOVE_MAP[e.code]; if(!dir) return;
+  moveKeys.delete(dir);
+});
+// если фокус ушёл с окна (alt-tab и т.п.) — зависшая «зажатая» клавиша иначе
+// продолжала бы двигать персонажа вечно, потому что keyup от неё не придёт
+addEventListener('blur', ()=> moveKeys.clear());
+
 const clock = new THREE.Clock();
 let walkT = 0;
 
@@ -5875,12 +5898,22 @@ function simStep(dt){
   // сила — по тому, насколько далеко стик отведён (аналоговая скорость, как
   // в мобильных играх — чуть тронул стик, персонаж идёт медленнее). Тут нет
   // «точки назначения» — просто едем в направлении, пока держим
-  const stickLen = Math.hypot(stickDX, stickDY);
+  // клавиатура (если хоть одна из WASD/стрелок зажата) подменяет собой ввод
+  // джойстика на этот кадр — тот же формат (dx/dy в пикселях экрана), чтобы
+  // вся остальная логика ниже (поворот, анимация шага) работала как есть
+  const kbx = (moveKeys.has('right')?1:0) - (moveKeys.has('left')?1:0);
+  const kby = (moveKeys.has('down')?1:0) - (moveKeys.has('up')?1:0);
+  const kbActive = kbx !== 0 || kby !== 0;
+  const kbLen = Math.hypot(kbx, kby) || 1;
+  const inHolding = kbActive || holding;
+  const inDX = kbActive ? kbx/kbLen*JOY_MAX : stickDX;
+  const inDY = kbActive ? kby/kbLen*JOY_MAX : stickDY;
+  const stickLen = Math.hypot(inDX, inDY);
   const stickMag = Math.min(1, stickLen / JOY_MAX);
   const wasMoving = moving;
-  if(holding && !editMode && stickMag > 0.08){ // маленькая мёртвая зона у центра — не дёргается от дрожи пальца
+  if(inHolding && !editMode && stickMag > 0.08){ // маленькая мёртвая зона у центра — не дёргается от дрожи пальца
     moving = true;
-    const nx = stickDX / stickLen, nz = stickDY / stickLen;
+    const nx = inDX / stickLen, nz = inDY / stickLen;
     const dir = groundRight.clone().multiplyScalar(nx).add(groundForward.clone().multiplyScalar(-nz));
     dir.normalize();
     player.root.position.addScaledVector(dir, SPEED*moveMult()*stickMag*dt);
